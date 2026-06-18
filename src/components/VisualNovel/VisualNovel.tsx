@@ -5,17 +5,15 @@ import { getSceneById, getStartScene } from '../../story/scenes';
 import type { Scene, SceneChoice } from '../../types/story';
 import { ChoiceList } from './ChoiceList';
 import { DialogueBox } from './DialogueBox';
-import { SceneLayer } from './SceneLayer';
+import { SceneStage } from './SceneStage';
 import { StartMenu } from './StartMenu';
 
-const CROSSFADE_MS = 800;
 const WRONG_FLASH_MS = 600;
 
 export function VisualNovel() {
   const [inMenu, setInMenu] = useState(true);
+  const [session, setSession] = useState(0);
   const [currentScene, setCurrentScene] = useState<Scene | undefined>(getStartScene);
-  const [previousScene, setPreviousScene] = useState<Scene | null>(null);
-  const [isCrossfading, setIsCrossfading] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [wrongLabel, setWrongLabel] = useState<string | null>(null);
 
@@ -36,42 +34,30 @@ export function VisualNovel() {
   const startAt = useCallback((firstId: string) => {
     const scene = getSceneById(firstId);
     if (!scene) return;
-    setPreviousScene(null);
     setCurrentScene(scene);
     setIsEnding(false);
-    setIsCrossfading(false);
     setWrongLabel(null);
     setInMenu(false);
+    setSession((s) => s + 1);
   }, []);
 
   const openMenu = useCallback(() => {
     audio.stopMusic();
     audio.stopVoice();
-    setPreviousScene(null);
     setIsEnding(false);
     setInMenu(true);
   }, []);
 
-  const goToScene = useCallback(
-    (nextId: string) => {
-      const nextScene = getSceneById(nextId);
-      if (!nextScene) {
-        if (import.meta.env.DEV) console.warn(`[VN] unknown scene id: "${nextId}"`);
-        return;
-      }
+  const goToScene = useCallback((nextId: string) => {
+    const nextScene = getSceneById(nextId);
+    if (!nextScene) {
+      if (import.meta.env.DEV) console.warn(`[VN] unknown scene id: "${nextId}"`);
+      return;
+    }
 
-      setPreviousScene(currentScene ?? null);
-      setCurrentScene(nextScene);
-      setWrongLabel(null);
-      setIsCrossfading(true);
-
-      window.setTimeout(() => {
-        setPreviousScene(null);
-        setIsCrossfading(false);
-      }, CROSSFADE_MS);
-    },
-    [currentScene],
-  );
+    setCurrentScene(nextScene);
+    setWrongLabel(null);
+  }, []);
 
   const advance = useCallback(() => {
     if (inMenu) return;
@@ -136,10 +122,6 @@ export function VisualNovel() {
     return () => window.removeEventListener('keydown', onKey);
   }, [advance]);
 
-  const handleVideoEnd = useCallback(() => {
-    if (currentScene?.nextSceneId) goToScene(currentScene.nextSceneId);
-    else setIsEnding(true);
-  }, [currentScene, goToScene]);
 
   if (inMenu) {
     return <StartMenu onSelect={startAt} />;
@@ -175,20 +157,7 @@ export function VisualNovel() {
         ☰ Сцены
       </button>
 
-      {previousScene && (
-        <div className="vn-scene-layer" data-testid="vn-scene-prev">
-          <SceneLayer scene={previousScene} />
-          <div className="vn-overlay" />
-        </div>
-      )}
-
-      <div
-        className={`vn-scene-layer ${isCrossfading ? 'vn-crossfade-in' : ''}`}
-        data-testid="vn-scene"
-      >
-        <SceneLayer scene={currentScene} onVideoEnd={handleVideoEnd} />
-        <div className="vn-overlay" />
-      </div>
+      <SceneStage key={session} scene={currentScene} />
 
       {showDialogue && (
         <DialogueBox speaker={currentScene.speaker} text={displayed} showCursor={showCursor} />

@@ -42,6 +42,121 @@ body {
   overflow: hidden;
 }
 
+/* Ken Burns на общем контейнере — не сбрасывается при смене кадра внутри сцены. */
+.vn-motion {
+  position: absolute;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  left: -4%;
+  top: -4%;
+  will-change: transform;
+}
+
+.vn-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.04);
+  filter: blur(6px) brightness(0.92);
+  will-change: opacity, transform, filter;
+}
+
+.vn-frame-active {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0) brightness(1);
+}
+
+/* --- dissolve: мягкий crossfade + лёгкий зум и расфокус --- */
+.vn-tr-dissolve .vn-frame {
+  transition:
+    opacity var(--vn-fade-ms, 900ms) cubic-bezier(0.33, 0, 0.2, 1),
+    transform var(--vn-fade-ms, 900ms) cubic-bezier(0.33, 0, 0.2, 1),
+    filter calc(var(--vn-fade-ms, 900ms) * 0.85) cubic-bezier(0.33, 0, 0.2, 1);
+}
+
+/* --- push: горизонтальный сдвиг как в слайд-шоу --- */
+.vn-tr-push-left .vn-frame {
+  transition:
+    opacity var(--vn-fade-ms, 1400ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--vn-fade-ms, 1400ms) cubic-bezier(0.22, 1, 0.36, 1),
+    filter calc(var(--vn-fade-ms, 1400ms) * 0.7) ease-out;
+}
+
+.vn-tr-push-left .vn-frame:not(.vn-frame-active) {
+  transform: translateX(-4%) scale(1.06);
+  filter: blur(4px) brightness(0.88);
+}
+
+.vn-tr-push-left .vn-frame-active {
+  transform: translateX(0) scale(1);
+}
+
+.vn-tr-push-right .vn-frame {
+  transition:
+    opacity var(--vn-fade-ms, 1400ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--vn-fade-ms, 1400ms) cubic-bezier(0.22, 1, 0.36, 1),
+    filter calc(var(--vn-fade-ms, 1400ms) * 0.7) ease-out;
+}
+
+.vn-tr-push-right .vn-frame:not(.vn-frame-active) {
+  transform: translateX(4%) scale(1.06);
+  filter: blur(4px) brightness(0.88);
+}
+
+.vn-tr-push-right .vn-frame-active {
+  transform: translateX(0) scale(1);
+}
+
+/* --- zoom: «пролёт» через увеличение --- */
+.vn-tr-zoom .vn-frame {
+  transition:
+    opacity var(--vn-fade-ms, 1300ms) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform var(--vn-fade-ms, 1300ms) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    filter calc(var(--vn-fade-ms, 1300ms) * 0.75) ease-out;
+}
+
+.vn-tr-zoom .vn-frame:not(.vn-frame-active) {
+  transform: scale(1.1);
+  filter: blur(5px) brightness(0.85);
+}
+
+.vn-tr-zoom .vn-frame-active {
+  transform: scale(1);
+}
+
+/* --- fade-black: киношная шторка --- */
+.vn-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #0a0614 0%, #000 72%);
+  opacity: 0;
+  transition: opacity var(--vn-curtain-out-ms, 950ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.vn-curtain-visible {
+  opacity: 1;
+  transition: opacity var(--vn-curtain-in-ms, 650ms) cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.vn-tr-fade-black .vn-frame {
+  transition:
+    opacity 120ms linear,
+    transform 120ms linear,
+    filter 120ms linear;
+}
+
+.vn-tr-fade-black .vn-frame-active {
+  filter: none;
+  transform: scale(1);
+}
+
 .vn-overlay {
   position: absolute;
   inset: 0;
@@ -54,17 +169,25 @@ body {
   );
 }
 
-.vn-crossfade-in {
-  animation: vn-crossfade-in 0.8s forwards;
+/* Ken Burns — плавное «дыхание» кадра, 45 s цикл. */
+.vn-effect-zoom-in {
+  transform-origin: 50% 45%;
+  animation: vn-zoom-in 45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
 
-@keyframes vn-crossfade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.vn-effect-zoom-out {
+  transform-origin: 50% 45%;
+  animation: vn-zoom-out 45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+.vn-effect-pan-left {
+  transform-origin: 50% 45%;
+  animation: vn-pan-left 45s cubic-bezier(0.45, 0.05, 0.55, 0.95) both;
+}
+
+.vn-effect-pan-right {
+  transform-origin: 50% 45%;
+  animation: vn-pan-right 45s cubic-bezier(0.45, 0.05, 0.55, 0.95) both;
 }
 
 .vn-dialogue {
@@ -176,61 +299,39 @@ body {
   }
 }
 
-/* Ken Burns — медленные и спокойные: мягкая амплитуда, плавный ease, long take. */
-.vn-effect-zoom-in {
-  transform-origin: 50% 50%;
-  animation: vn-zoom-in 24s ease-out both;
-}
-
-.vn-effect-zoom-out {
-  transform-origin: 50% 50%;
-  animation: vn-zoom-out 24s ease-out both;
-}
-
-.vn-effect-pan-left {
-  transform-origin: 50% 50%;
-  animation: vn-pan-left 24s ease-in-out both;
-}
-
-.vn-effect-pan-right {
-  transform-origin: 50% 50%;
-  animation: vn-pan-right 24s ease-in-out both;
-}
-
 @keyframes vn-zoom-in {
   from {
-    transform: scale(1.02);
+    transform: scale(1);
   }
   to {
-    transform: scale(1.1);
+    transform: scale(1.08);
   }
 }
 
 @keyframes vn-zoom-out {
   from {
-    transform: scale(1.1);
+    transform: scale(1.08);
   }
   to {
-    transform: scale(1.02);
+    transform: scale(1);
   }
 }
 
-/* Лёгкое смещение + небольшой зум, чтобы по краям не вылезали пустые поля. */
 @keyframes vn-pan-left {
   from {
-    transform: scale(1.08) translateX(2.5%);
+    transform: scale(1.06) translateX(2%);
   }
   to {
-    transform: scale(1.08) translateX(-2.5%);
+    transform: scale(1.06) translateX(-2%);
   }
 }
 
 @keyframes vn-pan-right {
   from {
-    transform: scale(1.08) translateX(-2.5%);
+    transform: scale(1.06) translateX(-2%);
   }
   to {
-    transform: scale(1.08) translateX(2.5%);
+    transform: scale(1.06) translateX(2%);
   }
 }
 

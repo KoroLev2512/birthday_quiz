@@ -138,8 +138,7 @@ const SCENES: SceneDef[] = [
   },
 ];
 
-// Спокойное чередование эффектов Ken Burns: соседние кадры всегда разные
-// (зум сменяется панорамой), весь цикл из 4-х повторяется без рывков.
+// Ken Burns — один эффект на всю сцену (папку), кадры внутри плавно сменяют друг друга.
 const EFFECTS: SceneEffect[] = ['zoom-in', 'pan-right', 'zoom-out', 'pan-left'];
 
 function buildScenes(defs: SceneDef[]): Scene[] {
@@ -159,7 +158,7 @@ function buildScenes(defs: SceneDef[]): Scene[] {
       const scene: Scene = {
         id,
         src: `/${DIR[def.n]}/${file}`,
-        effect: EFFECTS[flatIndex % EFFECTS.length],
+        effect: EFFECTS[def.n % EFFECTS.length],
         nextSceneId: next, // у самого последнего кадра будет undefined → экран «Конец»
       };
       const music = def.music?.[i + 1];
