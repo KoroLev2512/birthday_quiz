@@ -6,7 +6,6 @@ dist
 !.vscode/extensions.json
 .idea
 
-# Large media assets — download from Google Drive (see README)
-files/
+# Scenario files — local only
 scenario.pdf
 scenario.md

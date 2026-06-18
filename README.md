@@ -11,11 +11,15 @@ npm run dev
 
 ## Ассеты
 
-Медиафайлы (фото, видео, музыка) лежат локально в папке `files/` и не включены в репозиторий из‑за размера.
+Медиафайлы (фото, музыка) в папке `files/` — в репозитории через **Git LFS**.
 
-Скачать: [Google Drive](https://drive.google.com/drive/folders/1-JGlIT3g8BDDs4-LmdrzqDVc2WyjI0Rn?usp=sharing)
+После клонирования:
+```bash
+git lfs install
+git lfs pull
+```
 
-Сценарий: `scenario.pdf` / `scenario.md` — тоже локально, не в git.
+Сценарий (`scenario.pdf` / `scenario.md`) — только локально, не в git.
 
 ## Стек
 
