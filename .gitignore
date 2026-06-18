@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Large media assets — download from Google Drive (see README)
+files/
+scenario.pdf
+scenario.md

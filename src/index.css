@@ -1,0 +1,418 @@
+@import 'tailwindcss';
+
+:root {
+  --background: 220 20% 6%;
+  --foreground: 220 15% 90%;
+  --border: 220 15% 20%;
+  --primary: 260 60% 65%;
+  --primary-foreground: 220 20% 6%;
+  --app-font-sans: 'Georgia', serif;
+  --radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-sans);
+}
+
+.vn-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  cursor: pointer;
+  user-select: none;
+}
+
+.vn-scene-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.vn-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 40%,
+    rgb(0 0 0 / 35%),
+    rgb(0 0 0 / 75%)
+  );
+}
+
+.vn-crossfade-in {
+  animation: vn-crossfade-in 0.8s forwards;
+}
+
+@keyframes vn-crossfade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.vn-dialogue {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 2.5rem;
+  padding: 1.4rem 2rem 1.6rem;
+  border: 1px solid rgb(160 120 255 / 25%);
+  border-radius: 12px;
+  background: rgb(10 8 20 / 82%);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 40px rgb(100 60 200 / 18%);
+}
+
+.vn-speaker {
+  margin-bottom: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c4a8ff;
+}
+
+.vn-text {
+  min-height: 2.6em;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: rgb(230 225 255 / 92%);
+}
+
+.vn-cursor {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  color: #a678ff;
+  animation: vn-blink 1s ease-in-out infinite;
+}
+
+@keyframes vn-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.vn-choices {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 3.5rem;
+  padding: 0 1rem;
+}
+
+.vn-choice-btn {
+  padding: 0.85rem 1.5rem;
+  border: 1px solid rgb(160 120 255 / 45%);
+  border-radius: 8px;
+  background: rgb(15 10 35 / 85%);
+  color: rgb(220 210 255 / 95%);
+  font-family: var(--app-font-sans);
+  font-size: 0.98rem;
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition:
+    background 0.18s,
+    border-color 0.18s,
+    transform 0.12s;
+}
+
+.vn-choice-btn:hover {
+  border-color: rgb(180 150 255 / 75%);
+  background: rgb(100 60 200 / 35%);
+  transform: translateY(-1px);
+}
+
+.vn-choice-btn:active {
+  transform: translateY(0);
+}
+
+.vn-choice-wrong {
+  border-color: rgb(255 90 90 / 80%);
+  background: rgb(120 20 30 / 55%);
+  color: rgb(255 210 210 / 95%);
+  animation: vn-shake 0.4s ease;
+}
+
+@keyframes vn-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-7px);
+  }
+  40%,
+  80% {
+    transform: translateX(7px);
+  }
+}
+
+/* Ken Burns — медленные и спокойные: мягкая амплитуда, плавный ease, long take. */
+.vn-effect-zoom-in {
+  transform-origin: 50% 50%;
+  animation: vn-zoom-in 24s ease-out both;
+}
+
+.vn-effect-zoom-out {
+  transform-origin: 50% 50%;
+  animation: vn-zoom-out 24s ease-out both;
+}
+
+.vn-effect-pan-left {
+  transform-origin: 50% 50%;
+  animation: vn-pan-left 24s ease-in-out both;
+}
+
+.vn-effect-pan-right {
+  transform-origin: 50% 50%;
+  animation: vn-pan-right 24s ease-in-out both;
+}
+
+@keyframes vn-zoom-in {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes vn-zoom-out {
+  from {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
+/* Лёгкое смещение + небольшой зум, чтобы по краям не вылезали пустые поля. */
+@keyframes vn-pan-left {
+  from {
+    transform: scale(1.08) translateX(2.5%);
+  }
+  to {
+    transform: scale(1.08) translateX(-2.5%);
+  }
+}
+
+@keyframes vn-pan-right {
+  from {
+    transform: scale(1.08) translateX(-2.5%);
+  }
+  to {
+    transform: scale(1.08) translateX(2.5%);
+  }
+}
+
+.vn-end {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(200 180 255 / 85%);
+  animation: vn-fade-in 1.5s forwards;
+}
+
+@keyframes vn-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- стартовое меню навигации по сценам --- */
+.vn-menu {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  padding: 3rem 1.5rem 4rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(60 40 110 / 35%), transparent 60%),
+    #07060d;
+}
+
+.vn-menu-head {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.vn-menu-head h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.2rem;
+  letter-spacing: 0.06em;
+  color: rgb(225 215 255 / 95%);
+}
+
+.vn-menu-head p {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(180 165 220 / 60%);
+}
+
+.vn-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.vn-menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0;
+  border: 1px solid rgb(160 120 255 / 20%);
+  border-radius: 12px;
+  background: rgb(15 12 28 / 70%);
+  color: rgb(220 210 255 / 92%);
+  font-family: var(--app-font-sans);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 0.18s,
+    transform 0.12s,
+    box-shadow 0.18s;
+}
+
+.vn-menu-item:hover {
+  border-color: rgb(180 150 255 / 70%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgb(80 50 170 / 30%);
+}
+
+.vn-menu-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.vn-menu-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vn-menu-num {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.4rem;
+  border-radius: 6px;
+  background: rgb(10 8 20 / 80%);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #c4a8ff;
+}
+
+.vn-menu-label {
+  padding: 0 0.75rem 0.75rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+
+.vn-menu-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 30;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgb(160 120 255 / 35%);
+  border-radius: 8px;
+  background: rgb(10 8 20 / 65%);
+  color: rgb(210 198 255 / 90%);
+  font-family: var(--app-font-sans);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition:
+    opacity 0.25s,
+    border-color 0.18s;
+}
+
+/* Скрыта по умолчанию; проявляется при наведении в левый верхний угол
+   или при фокусе с клавиатуры (Tab) — доступна, но не мешает просмотру. */
+.vn-menu-btn:hover,
+.vn-menu-btn:focus-visible {
+  opacity: 1;
+  border-color: rgb(180 150 255 / 70%);
+}
+
+.vn-placeholder {
+  cursor: default;
+  justify-content: center;
+  background: #09090f;
+}
+
+.vn-placeholder-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.vn-placeholder-icon {
+  font-size: 4rem;
+  filter: grayscale(0.4);
+}
+
+.vn-placeholder h1 {
+  font-size: 1.6rem;
+  letter-spacing: 0.12em;
+  color: rgb(200 180 255 / 80%);
+}
+
+.vn-placeholder p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgb(180 170 210 / 55%);
+}
