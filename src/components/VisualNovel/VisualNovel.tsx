@@ -21,6 +21,14 @@ export function VisualNovel() {
   // Кнопка-действие может появляться с задержкой (см. button.delayMs).
   const [buttonVisible, setButtonVisible] = useState(false);
 
+  const fadeSfxTimer = useRef<number | null>(null);
+  const cancelFadeSfx = useCallback(() => {
+    if (fadeSfxTimer.current !== null) {
+      window.clearTimeout(fadeSfxTimer.current);
+      fadeSfxTimer.current = null;
+    }
+  }, []);
+
   const text = currentScene?.text ?? '';
   const { displayed, done, finish } = useTypewriter(text);
 
@@ -55,6 +63,7 @@ export function VisualNovel() {
   const startAt = useCallback((firstId: string) => {
     const scene = getSceneById(firstId);
     if (!scene) return;
+    audio.clearSfx();
     setCurrentScene(scene);
     setIsEnding(false);
     setWrongLabel(null);
@@ -66,10 +75,12 @@ export function VisualNovel() {
   const openMenu = useCallback(() => {
     audio.stopMusic();
     audio.stopVoice();
+    audio.clearSfx();
+    cancelFadeSfx();
     setIsEnding(false);
     setPendingNext(null);
     setInMenu(true);
-  }, []);
+  }, [cancelFadeSfx]);
 
   const goToScene = useCallback((nextId: string) => {
     const nextScene = getSceneById(nextId);
@@ -78,9 +89,31 @@ export function VisualNovel() {
       return;
     }
 
+    // Звуки «листаются» вместе с кадром: обрываем очередь предыдущего кадра,
+    // звуки нового запустит аудио-эффект по смене сцены.
+    audio.clearSfx();
     setCurrentScene(nextScene);
     setWrongLabel(null);
   }, []);
+
+  // Переход вперёд: либо в чёрный (ЗТМ), либо на следующий кадр, либо в конец.
+  // Используется и кликом/клавишей, и авто-переходом по таймингу.
+  const goForward = useCallback(
+    (scene: Scene) => {
+      if (scene.fadeOut && scene.nextSceneId) {
+        setPendingNext(scene.nextSceneId);
+        const fx = scene.fadeOutSfx;
+        if (fx) {
+          if (fadeSfxTimer.current !== null) window.clearTimeout(fadeSfxTimer.current);
+          fadeSfxTimer.current = window.setTimeout(() => audio.playSfx(fx.src), fx.delayMs ?? 0);
+        }
+        return;
+      }
+      if (scene.nextSceneId) goToScene(scene.nextSceneId);
+      else setIsEnding(true);
+    },
+    [goToScene],
+  );
 
   const advance = useCallback(() => {
     if (inMenu) return;
@@ -102,19 +135,8 @@ export function VisualNovel() {
       return;
     }
 
-    // ЗТМ: уводим в чёрный и ждём следующий клик.
-    if (currentScene.fadeOut && currentScene.nextSceneId) {
-      setPendingNext(currentScene.nextSceneId);
-      return;
-    }
-
-    if (currentScene.nextSceneId) {
-      goToScene(currentScene.nextSceneId);
-      return;
-    }
-
-    setIsEnding(true);
-  }, [inMenu, pendingNext, currentScene, done, finish, goToScene]);
+    goForward(currentScene);
+  }, [inMenu, pendingNext, currentScene, done, finish, goToScene, goForward]);
 
   const goBack = useCallback(() => {
     if (inMenu) return;
@@ -123,6 +145,7 @@ export function VisualNovel() {
     // На чёрном экране после ЗТМ — стрелка влево отменяет затемнение.
     if (pendingNext) {
       setPendingNext(null);
+      cancelFadeSfx();
       return;
     }
     if (isEnding) {
@@ -168,12 +191,9 @@ export function VisualNovel() {
     ) {
       return;
     }
-    const timer = window.setTimeout(() => {
-      if (currentScene.nextSceneId) goToScene(currentScene.nextSceneId);
-      else setIsEnding(true);
-    }, currentScene.autoAdvanceMs);
+    const timer = window.setTimeout(() => goForward(currentScene), currentScene.autoAdvanceMs);
     return () => window.clearTimeout(timer);
-  }, [inMenu, pendingNext, currentScene, done, goToScene]);
+  }, [inMenu, pendingNext, currentScene, done, goForward]);
 
   // Клавиатура: Space / Enter / → — вперёд, ← — назад.
   useEffect(() => {

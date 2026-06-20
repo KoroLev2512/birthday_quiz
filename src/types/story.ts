@@ -35,6 +35,8 @@ export type Scene = {
   actionLabel?: string;
   /** Сценарный ЗТМ: уход с этого кадра делается плавным затемнением в чёрный. */
   fadeOut?: boolean;
+  /** Звук, который проигрывается во время ЗТМ (с задержкой delayMs после затемнения). */
+  fadeOutSfx?: { src: string; delayMs?: number };
   /** When true, wrong choices (correct === false) buzz and keep the player on the scene. */
   quiz?: boolean;
   autoAdvanceMs?: number;
@@ -49,8 +51,8 @@ export type Scene = {
    * Changing music (string or null) also stops any active voice line.
    */
   music?: string | null;
-  /** One-shot sound effects played when the scene appears. */
-  sfx?: string[];
+  /** Звуки на входе в кадр, по очереди. Число в массиве = пауза в мс между звуками. */
+  sfx?: (string | number)[];
   /** Voice line played when the scene appears (persists until the music changes). */
   voice?: string;
   /** Sound played when a wrong quiz answer is chosen. */
