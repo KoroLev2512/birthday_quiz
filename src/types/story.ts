@@ -1,5 +1,13 @@
 export type SceneEffect = 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right';
 
+/** Одиночная кнопка-действие поверх кадра (например «НАЧАТЬ ИГРУ»). */
+export type SceneButton = {
+  label: string;
+  nextSceneId: string;
+  /** Задержка перед появлением кнопки (мс). */
+  delayMs?: number;
+};
+
 export type SceneChoice = {
   label: string;
   /** Where this choice leads. Omitted for a wrong quiz answer that stays on the scene. */
@@ -21,6 +29,12 @@ export type Scene = {
   speaker?: string;
   text?: string;
   choices?: SceneChoice[];
+  /** Кнопка-действие внизу по центру; блокирует переход по клику по фону. */
+  button?: SceneButton;
+  /** Подпись кнопки внизу (например «Ответ»); не блокирует переход — просто листает вперёд. */
+  actionLabel?: string;
+  /** Сценарный ЗТМ: уход с этого кадра делается плавным затемнением в чёрный. */
+  fadeOut?: boolean;
   /** When true, wrong choices (correct === false) buzz and keep the player on the scene. */
   quiz?: boolean;
   autoAdvanceMs?: number;

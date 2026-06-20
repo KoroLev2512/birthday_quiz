@@ -44,10 +44,22 @@ type SceneDef = {
   frames: string[];
   /** Музыка, выставляемая на 1-based индексе кадра (между ними играет предыдущая). */
   music?: Record<number, string | null>;
+  /** Озвучка поверх музыки на 1-based индексе кадра. */
+  voice?: Record<number, string>;
+  /** Автопереход (мс) на 1-based индексе кадра; кадр можно пролистнуть раньше клавишей. */
+  auto?: Record<number, number>;
 };
 
 const SCENES: SceneDef[] = [
-  { n: 0, frames: kadr(1, 5), music: { 1: au(0, '1 сцена фоновая музыка') } },
+  {
+    n: 0,
+    frames: kadr(1, 5),
+    music: { 1: au(0, '1 сцена фоновая музыка') },
+    // Голос мамы (одна дорожка) играет поверх музыки всю сцену.
+    voice: { 1: au(0, 'Голос_Мамы') },
+    // Тайминги кадров по сценарию (последний кадр — кнопка «НАЧАТЬ ИГРУ»).
+    auto: { 1: 10000, 2: 13000, 3: 10000, 4: 14000 },
+  },
   { n: 1, frames: kadr(1, 13), music: { 1: au(1, 'Фоновый звук 1') } },
   { n: 2, frames: kadr(1, 11), music: { 1: au(2, 'Сцена 2 - фоновая музыка') } },
   {
@@ -141,6 +153,11 @@ const SCENES: SceneDef[] = [
 // Ken Burns — один эффект на всю сцену (папку), кадры внутри плавно сменяют друг друга.
 const EFFECTS: SceneEffect[] = ['zoom-in', 'pan-right', 'zoom-out', 'pan-left'];
 
+// Кнопки-действия по сценарию (id кадра → кнопка).
+const BUTTONS: Record<string, { label: string; nextSceneId: string; delayMs?: number }> = {
+  s0_5: { label: 'НАЧАТЬ ИГРУ', nextSceneId: 's1_1', delayMs: 9000 },
+};
+
 function buildScenes(defs: SceneDef[]): Scene[] {
   // Плоский список id всех кадров, чтобы связать nextSceneId по порядку.
   const ids: string[] = [];
@@ -163,6 +180,19 @@ function buildScenes(defs: SceneDef[]): Scene[] {
       };
       const music = def.music?.[i + 1];
       if (music !== undefined) scene.music = music;
+      const voice = def.voice?.[i + 1];
+      if (voice !== undefined) scene.voice = voice;
+      const auto = def.auto?.[i + 1];
+      if (auto !== undefined) scene.autoAdvanceMs = auto;
+      if (BUTTONS[id]) scene.button = BUTTONS[id];
+      // Кадры-«картинки» квиза (сцена 3) — кнопка «Ответ» внизу.
+      if (file.includes('картинка')) scene.actionLabel = 'Ответ';
+
+      // ЗТМ по сценарию стоит в конце сцен 1–15: последний кадр сцены,
+      // у которого есть следующая сцена, уводим в чёрный затемнением.
+      const isLastFrame = i === def.frames.length - 1;
+      if (isLastFrame && def.n !== 0 && next) scene.fadeOut = true;
+
       scenes.push(scene);
       flatIndex += 1;
     });
@@ -199,4 +229,11 @@ export function getSceneById(id: string) {
 
 export function getStartScene() {
   return getSceneById(story.startSceneId);
+}
+
+/** id предыдущего кадра в общем порядке (для перелистывания назад). */
+export function getPrevSceneId(id?: string): string | undefined {
+  if (!id) return undefined;
+  const i = story.scenes.findIndex((scene) => scene.id === id);
+  return i > 0 ? story.scenes[i - 1].id : undefined;
 }

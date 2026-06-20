@@ -20,7 +20,7 @@ class AudioController {
     if (!this.bg) {
       this.bg = new Audio();
       this.bg.loop = true;
-      this.bg.volume = 0.45;
+      this.bg.volume = 0.18;
     }
     return this.bg;
   }

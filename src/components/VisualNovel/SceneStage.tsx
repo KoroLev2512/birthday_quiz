@@ -76,7 +76,12 @@ export function SceneStage({ scene }: SceneStageProps) {
 
     const prevGroup = parseSceneGroup(prevIdRef.current);
     const nextGroup = parseSceneGroup(scene.id);
-    const kind = transitionFor(prevGroup, nextGroup);
+    // Сценарный ЗТМ: чёрным экраном управляет VisualNovel (vn-blackout),
+    // поэтому подложку под ним проявляем мягким dissolve.
+    const prevScene = getSceneById(prevIdRef.current);
+    const kind: TransitionKind = prevScene?.fadeOut
+      ? 'dissolve'
+      : transitionFor(prevGroup, nextGroup);
     const target = activeRef.current === 'a' ? 'b' : 'a';
 
     setTransition(kind);

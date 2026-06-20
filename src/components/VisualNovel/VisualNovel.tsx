@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { audio } from '../../audio/audioController';
 import { useTypewriter } from '../../hooks/useTypewriter';
-import { getSceneById, getStartScene } from '../../story/scenes';
+import { getPrevSceneId, getSceneById, getStartScene } from '../../story/scenes';
 import type { Scene, SceneChoice } from '../../types/story';
 import { ChoiceList } from './ChoiceList';
 import { DialogueBox } from './DialogueBox';
@@ -16,6 +16,10 @@ export function VisualNovel() {
   const [currentScene, setCurrentScene] = useState<Scene | undefined>(getStartScene);
   const [isEnding, setIsEnding] = useState(false);
   const [wrongLabel, setWrongLabel] = useState<string | null>(null);
+  // id следующей сцены, ожидающей открытия после ЗТМ (экран чёрный, ждём клик).
+  const [pendingNext, setPendingNext] = useState<string | null>(null);
+  // Кнопка-действие может появляться с задержкой (см. button.delayMs).
+  const [buttonVisible, setButtonVisible] = useState(false);
 
   const text = currentScene?.text ?? '';
   const { displayed, done, finish } = useTypewriter(text);
@@ -31,12 +35,30 @@ export function VisualNovel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
+  // Показ кнопки-действия: сразу или с задержкой button.delayMs.
+  useEffect(() => {
+    const btn = currentScene?.button;
+    if (inMenu || !btn) {
+      setButtonVisible(false);
+      return;
+    }
+    if (!btn.delayMs) {
+      setButtonVisible(true);
+      return;
+    }
+    setButtonVisible(false);
+    const t = window.setTimeout(() => setButtonVisible(true), btn.delayMs);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneId, inMenu]);
+
   const startAt = useCallback((firstId: string) => {
     const scene = getSceneById(firstId);
     if (!scene) return;
     setCurrentScene(scene);
     setIsEnding(false);
     setWrongLabel(null);
+    setPendingNext(null);
     setInMenu(false);
     setSession((s) => s + 1);
   }, []);
@@ -45,6 +67,7 @@ export function VisualNovel() {
     audio.stopMusic();
     audio.stopVoice();
     setIsEnding(false);
+    setPendingNext(null);
     setInMenu(true);
   }, []);
 
@@ -62,11 +85,26 @@ export function VisualNovel() {
   const advance = useCallback(() => {
     if (inMenu) return;
     audio.resume();
+
+    // Экран чёрный после ЗТМ — следующая сцена открывается только по клику.
+    if (pendingNext) {
+      const next = pendingNext;
+      setPendingNext(null);
+      goToScene(next);
+      return;
+    }
+
     if (!currentScene) return;
-    if (currentScene.choices?.length) return;
+    if (currentScene.choices?.length || currentScene.button) return;
 
     if (!done) {
       finish();
+      return;
+    }
+
+    // ЗТМ: уводим в чёрный и ждём следующий клик.
+    if (currentScene.fadeOut && currentScene.nextSceneId) {
+      setPendingNext(currentScene.nextSceneId);
       return;
     }
 
@@ -76,7 +114,25 @@ export function VisualNovel() {
     }
 
     setIsEnding(true);
-  }, [inMenu, currentScene, done, finish, goToScene]);
+  }, [inMenu, pendingNext, currentScene, done, finish, goToScene]);
+
+  const goBack = useCallback(() => {
+    if (inMenu) return;
+    audio.resume();
+
+    // На чёрном экране после ЗТМ — стрелка влево отменяет затемнение.
+    if (pendingNext) {
+      setPendingNext(null);
+      return;
+    }
+    if (isEnding) {
+      setIsEnding(false);
+      return;
+    }
+
+    const prevId = getPrevSceneId(currentScene?.id);
+    if (prevId) goToScene(prevId);
+  }, [inMenu, pendingNext, isEnding, currentScene, goToScene]);
 
   const wrongTimer = useRef<number | null>(null);
   const handleChoose = useCallback(
@@ -98,9 +154,18 @@ export function VisualNovel() {
     [currentScene, goToScene],
   );
 
-  // Auto-advance timed scenes once the text has finished typing.
+  // Авто-переход по таймингу. Не работает в меню, на чёрном экране и на
+  // кадрах с кнопкой/выбором.
   useEffect(() => {
-    if (!currentScene || currentScene.choices?.length || !currentScene.autoAdvanceMs || !done) {
+    if (
+      inMenu ||
+      pendingNext ||
+      !currentScene ||
+      currentScene.choices?.length ||
+      currentScene.button ||
+      !currentScene.autoAdvanceMs ||
+      !done
+    ) {
       return;
     }
     const timer = window.setTimeout(() => {
@@ -108,19 +173,22 @@ export function VisualNovel() {
       else setIsEnding(true);
     }, currentScene.autoAdvanceMs);
     return () => window.clearTimeout(timer);
-  }, [currentScene, done, goToScene]);
+  }, [inMenu, pendingNext, currentScene, done, goToScene]);
 
-  // Keyboard: Space / Enter advance the story.
+  // Клавиатура: Space / Enter / → — вперёд, ← — назад.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.code === 'Enter') {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
         e.preventDefault();
         advance();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        goBack();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [advance]);
+  }, [advance, goBack]);
 
 
   if (inMenu) {
@@ -166,6 +234,41 @@ export function VisualNovel() {
       {showChoices && currentScene.choices && (
         <ChoiceList choices={currentScene.choices} onChoose={handleChoose} wrongLabel={wrongLabel} />
       )}
+
+      {currentScene.actionLabel && (
+        <button
+          type="button"
+          className="vn-answer-btn"
+          data-testid="vn-answer-btn"
+          onClick={(event) => {
+            event.stopPropagation();
+            advance();
+          }}
+        >
+          {currentScene.actionLabel}
+        </button>
+      )}
+
+      {currentScene.button && buttonVisible && (
+        <button
+          type="button"
+          className="vn-start-btn"
+          data-testid="vn-start-btn"
+          onClick={(event) => {
+            event.stopPropagation();
+            audio.resume();
+            goToScene(currentScene.button!.nextSceneId);
+          }}
+        >
+          {currentScene.button.label}
+        </button>
+      )}
+
+      <div
+        className={`vn-blackout ${pendingNext ? 'vn-blackout-on' : ''}`}
+        data-testid="vn-blackout"
+        aria-hidden
+      />
 
       {isEnding && (
         <div className="vn-end" data-testid="vn-end">
