@@ -250,6 +250,18 @@ body {
   padding: 0 1rem;
 }
 
+.vn-choices-row {
+  flex-direction: row;
+  justify-content: center;
+  gap: 1rem;
+  max-width: none;
+}
+
+.vn-choices-row .vn-choice-btn {
+  flex: 1;
+  max-width: 220px;
+}
+
 .vn-choice-btn {
   padding: 0.85rem 1.5rem;
   border: 1px solid rgb(160 120 255 / 45%);
@@ -282,6 +294,35 @@ body {
   background: rgb(120 20 30 / 55%);
   color: rgb(255 210 210 / 95%);
   animation: vn-shake 0.4s ease;
+}
+
+.vn-answer-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+  opacity: 0;
+  animation: vn-answer-flash 0.42s ease-out forwards;
+}
+
+.vn-answer-flash-correct {
+  background: rgb(40 220 120 / 32%);
+}
+
+.vn-answer-flash-wrong {
+  background: rgb(255 50 70 / 28%);
+}
+
+@keyframes vn-answer-flash {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes vn-shake {
@@ -342,12 +383,64 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #000;
   pointer-events: none;
   font-size: 2rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: rgb(200 180 255 / 85%);
   animation: vn-fade-in 1.5s forwards;
+}
+
+/* --- финальные титры --- */
+.vn-credits {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.vn-credits-scroll {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 1.5rem;
+  text-align: center;
+  color: #fff;
+  font-family: 'Times New Roman', Times, serif;
+  animation: vn-credits-scroll linear forwards;
+  will-change: transform;
+}
+
+.vn-credits-heading {
+  margin: 0 0 2.5rem;
+  font-size: clamp(1.4rem, 3.5vw, 2rem);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vn-credits-name {
+  margin: 0 0 1.75rem;
+  font-size: clamp(1.1rem, 2.8vw, 1.55rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.vn-credits-tail {
+  height: 100vh;
+}
+
+@keyframes vn-credits-scroll {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(-100%);
+  }
 }
 
 @keyframes vn-fade-in {

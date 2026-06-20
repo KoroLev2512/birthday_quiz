@@ -6,10 +6,14 @@ export type SceneButton = {
   nextSceneId: string;
   /** Задержка перед появлением кнопки (мс). */
   delayMs?: number;
+  /** Показать кнопку после окончания очереди sfx текущего кадра. */
+  afterSfx?: boolean;
 };
 
 export type SceneChoice = {
   label: string;
+  /** Звук при выборе варианта (проигрывается перед переходом). */
+  sfx?: string;
   /** Where this choice leads. Omitted for a wrong quiz answer that stays on the scene. */
   nextSceneId?: string;
   /**
@@ -23,16 +27,20 @@ export type SceneChoice = {
 
 export type Scene = {
   id: string;
-  type?: 'image' | 'video';
+  type?: 'image' | 'video' | 'credits';
   src: string;
   effect?: SceneEffect;
   speaker?: string;
   text?: string;
   choices?: SceneChoice[];
+  /** Расположение кнопок выбора: в строку (налево/направо) или столбиком. */
+  choiceLayout?: 'row' | 'column';
   /** Кнопка-действие внизу по центру; блокирует переход по клику по фону. */
   button?: SceneButton;
   /** Подпись кнопки внизу (например «Ответ»); не блокирует переход — просто листает вперёд. */
   actionLabel?: string;
+  /** Звук по кнопке actionLabel; если задан — клик проигрывает звук, а не листает кадр. */
+  actionSfx?: string;
   /** Сценарный ЗТМ: уход с этого кадра делается плавным затемнением в чёрный. */
   fadeOut?: boolean;
   /** Звук, который проигрывается во время ЗТМ (с задержкой delayMs после затемнения). */
@@ -57,6 +65,8 @@ export type Scene = {
   voice?: string;
   /** Sound played when a wrong quiz answer is chosen. */
   wrongSfx?: string;
+  /** Имена для экрана титров (type === 'credits'). */
+  credits?: string[];
 };
 
 export type Story = {

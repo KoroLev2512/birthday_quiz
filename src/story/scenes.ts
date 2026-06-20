@@ -1,4 +1,5 @@
-import type { Scene, SceneEffect, Story } from '../types/story';
+import type { Scene, SceneChoice, SceneEffect, Story } from '../types/story';
+import { CREDITS_CAST } from './credits';
 
 /**
  * Содержимое новеллы собирается из готовых ассетов в папке `files/`,
@@ -30,11 +31,32 @@ const DIR: Record<number, string> = {
   16: '16 сцена',
 };
 
-/** Путь к аудио внутри папки сцены. */
-const au = (n: number, name: string) => `/${DIR[n]}/${name}.mp3`;
+/** Путь к аудио внутри папки сцены (NFC — иначе на macOS пути не совпадут с файлами). */
+const au = (n: number, name: string) => `/${DIR[n]}/${name.normalize('NFC')}.mp3`;
 
 /** Путь к озвучке/доп. звукам в подпапке «Звуки» сцены 1. */
-const z1 = (name: string) => `/${DIR[1]}/Звуки/${name}.mp3`;
+const z1 = (name: string) => `/${DIR[1]}/Звуки/${name.normalize('NFC')}.mp3`;
+
+/** Путь к озвучке/доп. звукам в подпапке «Звуки» сцены 2. */
+const z2 = (name: string) => `/${DIR[2]}/Звуки/${name.normalize('NFC')}.mp3`;
+
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 5. */
+const z5 = (name: string) => `/${DIR[5]}/Звуки/${name.normalize('NFC')}.mp3`;
+
+/** Путь к ассетам мини-игры в подпапке «Игра» сцены 5. */
+const g5 = (name: string) => `/${DIR[5]}/Игра/${name.normalize('NFC')}`;
+
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 6. */
+const z6 = (name: string) => `/${DIR[6]}/Звуки/${name.normalize('NFC')}.mp3`;
+
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 8. */
+const z8 = (name: string) => `/${DIR[8]}/Звуки/${name.normalize('NFC')}.mp3`;
+
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 9. */
+const z9 = (name: string) => `/${DIR[9]}/Звуки/${name.normalize('NFC')}.mp3`;
+
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 11. */
+const z11 = (name: string) => `/${DIR[11]}/Звуки/${name.normalize('NFC')}.mp3`;
 
 /** Имена кадров «A кадр.png» … «B кадр.png». */
 const kadr = (a: number, b: number, ext = 'png') =>
@@ -53,6 +75,8 @@ type SceneDef = {
   sfx?: Record<number, (string | number)[]>;
   /** Автопереход (мс) на 1-based индексе кадра; кадр можно пролистнуть раньше клавишей. */
   auto?: Record<number, number>;
+  /** Переопределение nextSceneId (1-based индекс кадра → id следующего кадра). */
+  next?: Record<number, string>;
 };
 
 const SCENES: SceneDef[] = [
@@ -70,35 +94,34 @@ const SCENES: SceneDef[] = [
     // По обновлённому сценарию — кадры 1–12, ЗТМ после 12 (файл «13 кадр» не используется).
     frames: kadr(1, 12),
     // На 1 кадре глушим музыку/голос сцены 0; «Фоновый звук 1» (дом) — с 8 кадра.
-    music: { 1: null, 8: au(1, 'Фоновый звук 1') },
-    // Полная последовательность по сценарию: реплики/Телевизор/Волшебство — из «Звуки»,
-    // эффекты — из папки сцены. Число = пауза в мс.
+    music: { 1: null, 8: z1('Фоновый звук 1') },
+    // Вся озвучка и эффекты — только из подпапки «Звуки». Число = пауза в мс.
     sfx: {
       1: [
-        au(1, 'Сметана1'),
+        z1('Сметана'),
         z1('Маша, мне надоело смотреть это все по кругу! Дай сюда!'),
         z1('Телевизор'),
-        au(1, 'Пацаны'),
+        z1('Пацаны'),
       ],
       2: [
         z1('Фу, как можно смотреть это убежище. А ну отдай… и попкорн тоже'),
         z1('Телевизор'),
-        au(1, 'Сметана2'),
+        z1('Сметана'),
       ],
       3: [
         z1('Маша, у меня для тебя подарок на День Рождения. Хочешь посмотреть_'),
         z1('Так, оно же завтра… Ну ладно, давай'),
       ],
       4: [z1(' Вауу, братишка, спа…')],
-      5: [au(1, 'Смех'), z1('Ах ты…А ну стой!'), au(1, 'Лай1')],
+      5: [z1('Смех'), z1('Ах ты…А ну стой!'), z1('Лай')],
       7: [z1('Стой.. стой… смотри… Это же дом, куда мы лазили в детстве')],
       9: [z1('Ух, я без тебя бы не забралась _ Конеееш.. блин')],
-      10: [z1('Тут ничего не поменялось'), 2000, z1('А это что_'), au(1, 'Лай2')],
+      10: [z1('Тут ничего не поменялось'), 2000, z1('А это что_'), z1('Лай')],
       11: [
         z1('Волшебство'),
         z1('Может кто-то Airpodсы оставил_ Неважно, я забираю это! _ Мы вместе это нашли! _ Это я нашла!'),
       ],
-      12: [z1('А я тебя сюда привел!'), au(1, 'Лай3'), au(1, 'Взрыв')],
+      12: [z1('А я тебя сюда привел!'), z1('Лай')],
     },
     // Тайминги кадров по сценарию (последний кадр авто-уводит в ЗТМ).
     auto: {
@@ -113,10 +136,31 @@ const SCENES: SceneDef[] = [
       9: 5000,
       10: 7000,
       11: 7000,
-      12: 7000,
+      12: 5000,
     },
   },
-  { n: 2, frames: kadr(1, 11), music: { 1: au(2, 'Сцена 2 - фоновая музыка') } },
+  {
+    n: 2,
+    frames: kadr(1, 9),
+    music: { 1: au(2, 'Сцена 2 - фоновая музыка') },
+    sfx: {
+      1: [z2('Дааа, это полное безобразие. Я сегодня с утра занималась своими обычными делами…')],
+      2: [z2('всю морковку мне отлежали')],
+      3: [
+        z2(
+          'Я готовила ежеденельную летопись для купеческой культуры и искала хлопцов для Промысел Night.',
+        ),
+      ],
+      4: [z2('из чего теперь аджику делать ')],
+      5: [z2('Как вдруг спускаюсь мужу за вареньем, а тут лежат эти два молодца.')],
+      8: [
+        z2(
+          'Товарищ офицер, немедленно выведите этих крестьян из нашего дома. Камилла, где мое варенье и хачапури_',
+        ),
+      ],
+    },
+    auto: { 2: 4000, 3: 6000, 8: 8000 },
+  },
   {
     n: 3,
     frames: [
@@ -139,15 +183,63 @@ const SCENES: SceneDef[] = [
       6: au(3, 'Сцена 3 - Фоновая музыка 2'),
     },
   },
-  { n: 4, frames: kadr(1, 5), music: { 1: au(4, 'Сцена 4 - Фоновая музыка ') } },
-  { n: 5, frames: kadr(1, 10), music: { 1: au(5, 'Сцена 5 Фоновый звук') } },
+  {
+    n: 4,
+    frames: kadr(1, 5),
+    music: { 1: au(4, 'Сцена 4 - Фоновая музыка ') },
+    sfx: {
+      2: [au(4, 'Эй, вы дорогу загородили!')],
+      3: [au(4, 'Монатик')],
+      4: [au(4, 'Вам помочь_ Я еду на свадьбу Императрицы на Дворцовой площади. Поехали со мной!')],
+      5: [au(4, 'Монатик')],
+    },
+    auto: { 1: 5000, 2: 3000, 3: 10000, 4: 7000, 5: 10000 },
+  },
+  {
+    n: 5,
+    frames: kadr(1, 10),
+    music: { 2: z5('Сцена 5 Фоновый звук') },
+    sfx: {
+      1: [z5('Лошадь')],
+      2: [z5('Ну вот, здесь повеселее! Пойдемте, посмотрим, что тут есть!')],
+      3: [
+        z5(
+          'Эй, народ! Подходи и не робей! Угадай мелодию скорей! Ты послушай наш напой! Забирай свой приз большой! Хотите сыграть_',
+        ),
+      ],
+      4: [g5('Золото_кон.mp3')],
+      5: [g5('Нойз_кон.mp3')],
+      6: [g5('Дмитриенко_кон.mp3')],
+      7: [g5('Свинки_кон.mp3')],
+      8: [
+        z5(
+          'Молодцы! Но чтобы получить суперприз вам нужно, сказать какую мелодию поют знамениты двойняшки на фестивале Модуль_ Обычно они...',
+        ),
+      ],
+      9: [z5('Спасибо, молодой человек! Вы настоящий джентльмен!')],
+      10: [z5('Вы что ищите это_ Я знаю, как туда попасть, идемте.')],
+    },
+    auto: { 1: 5000, 2: 5000, 8: 11000, 10: 5000 },
+    next: { 8: 's5_8_vid' },
+  },
   {
     n: 6,
     frames: kadr(1, 10),
     music: {
-      1: au(6, 'Сцена 6 - Фоновая музыка 1 '),
-      4: au(6, 'Сцена 6 - Фоновая музыка 2'),
+      1: z6('Сцена 6 - Фоновая музыка 1 '),
+      4: z6('Сцена 6 - Фоновая музыка 2'),
     },
+    sfx: {
+      1: [z6('Именем ее Величества, стоять!')],
+      3: [z6('Монатик'), z6('Проходите, очаровательная леди!')],
+      5: [z6('Генерал, приветствую вас. Вы кого-то сопровождаете_')],
+      6: [z6('Да, это мои новые товарищи! Мы раньше… служили (врет)')],
+      7: [z6('Служили… где_')],
+      8: [z6('Да к это… Финов под полтавой разгромили')],
+      9: [z6('Понятно. Вы никогда не умели врать, КАЛЕГА!')],
+      10: [z6('Псс..Вы можете пройти через кухню!')],
+    },
+    auto: { 1: 5000, 3: 15000, 4: 5000, 5: 5000, 6: 5000, 7: 5000, 8: 4000, 9: 6000, 10: 5000 },
   },
   {
     n: 7,
@@ -157,14 +249,57 @@ const SCENES: SceneDef[] = [
       3: au(7, 'Сцена 7 - Фоновая музыка 2'),
     },
   },
-  { n: 8, frames: kadr(1, 8), music: { 1: au(8, 'Сцена 8 - Фоновая музыка 1') } },
+  {
+    n: 8,
+    frames: kadr(1, 8),
+    music: { 1: z8('Сцена 8 - Фоновая музыка 1') },
+    sfx: {
+      1: [
+        z8(
+          'Внимание! Слушайте все от Киева до Порта Артура! Да благословит Господь этот счастливый союз великой династии нашей Империи!',
+        ),
+      ],
+      2: [z8('Слава Императрице!')],
+      3: [
+        z8(
+          'Дамы и Господа, спасибо всем, что сегодня вы собрались здесь! В честь нашей свадьбы мы с моим суженным учреждаем благотворительный фонд, куда сможет обратиться любой нуждающийся! Пожалуйста, внесите символ нашего фонда!',
+        ),
+      ],
+      4: [z8('Тряпка')],
+      5: [
+        z8('Восхищение толпы'),
+        z8('Этот символ посвящен братьям и сестрам – людям, которые всегда будут ближе всех!'),
+      ],
+      6: [
+        z8(
+          'Где бы они ни были_ в Стамбуле или Санкт-Петербурге, они никогда не бросят друг друга! Так же и мы не бросим друг друга и наших подданных!',
+        ),
+      ],
+      7: [z8('Да будет пир!')],
+      8: [z8('Удар1'), z8('Удар2')],
+    },
+    auto: { 1: 10000, 2: 3000, 3: 17000, 4: 3000, 5: 12000, 6: 10000, 7: 3000, 8: 2000 },
+  },
   {
     n: 9,
     frames: kadr(1, 4),
     music: {
-      1: au(9, '16 сцена фоновая музыка 1'),
-      4: au(9, '16 сцена фоновая музыка 2'),
+      1: z9('9 Сцена Фоновая музыка 1'),
+      3: z9('9 Сцена Фоновая музыка 1'),
     },
+    sfx: {
+      2: [
+        z9(
+          'Молодой человек! Мне не с кем танцевать Румбу! Вы хотите быть моим партнером_ Постойте.. Но я вас не видела. Вы точно танцор_',
+        ),
+      ],
+      4: [
+        z9(
+          'Простите, эта часть зала только для иностранных гостей! Я отвечаю за имидж нашей Империи перед послами, поэтому я не смогу вас туда пустить просто так. Вы не могли бы заполнить небольшую анкету_',
+        ),
+      ],
+    },
+    auto: { 1: 5000, 2: 10000, 3: 5000, 4: 17000 },
   },
   {
     n: 10,
@@ -177,7 +312,21 @@ const SCENES: SceneDef[] = [
   {
     n: 11,
     frames: [...kadr(1, 18), '19 кадр.jpeg'],
-    music: { 1: au(11, '11 Сцена Фоновая музыка') },
+    music: { 1: z11('11 Сцена Фоновая музыка') },
+    sfx: {
+      3: [z11('Охрана')],
+      6: [
+        z11(
+          'Эй, вы мне на ногу наступили! Вы куда торопитесь_ Зажигайте со мной! Текилу или сразу кальян_ Куда вы…_',
+        ),
+      ],
+      7: [z11('Охрана')],
+      11: [z11('Охрана')],
+      14: [z11('Охрана')],
+    },
+    auto: { 1: 8000, 4: 3000, 6: 10000, 9: 3000, 12: 3000, 15: 3000, 16: 3000, 17: 3000, 18: 3000, 19: 3000 },
+    // Кадр 6 — правильный путь, линейно ведём на 8-й (минуя тупик 7).
+    next: { 6: 's11_8' },
   },
   { n: 12, frames: kadr(1, 3), music: { 1: au(12, 'Сцена 12 - Фоновая музыка') } },
   {
@@ -209,12 +358,87 @@ const SCENES: SceneDef[] = [
 const EFFECTS: SceneEffect[] = ['zoom-in', 'pan-right', 'zoom-out', 'pan-left'];
 
 // Кнопки-действия по сценарию (id кадра → кнопка).
-const BUTTONS: Record<string, { label: string; nextSceneId: string; delayMs?: number }> = {
+const BUTTONS: Record<string, { label: string; nextSceneId: string; delayMs?: number; afterSfx?: boolean }> = {
   s0_5: { label: 'НАЧАТЬ ИГРУ', nextSceneId: 's1_1', delayMs: 9000 },
+  s5_3: { label: 'СЫГРАТЬ', nextSceneId: 's5_4', afterSfx: true },
+  s11_3: { label: 'Назад', nextSceneId: 's11_2' },
+  s11_7: { label: 'Назад', nextSceneId: 's11_6' },
+  s11_11: { label: 'Назад', nextSceneId: 's11_10' },
+  s11_14: { label: 'Назад', nextSceneId: 's11_13' },
+};
+
+// Варианты выбора на кадре (все ведут на nextSceneId).
+const CHOICES: Record<string, SceneChoice[]> = {
+  s2_6: [
+    { label: 'Что здесь происходит?', nextSceneId: 's2_7' },
+    { label: 'Где мы?', nextSceneId: 's2_7' },
+    { label: 'Нас зовут Матвей и Маша', nextSceneId: 's2_7' },
+  ],
+  s6_2: [
+    { label: 'Вижу вы совсем один… Может вам нужна связка?', nextSceneId: 's6_3' },
+    { label: 'Как вам идет эта форма! Вы как Андрей Болконский!', nextSceneId: 's6_3' },
+    { label: 'Какая у вас огромная шпага! Вы наверняка разбиваете ей сердца!', nextSceneId: 's6_3' },
+  ],
+  s5_9: [
+    {
+      label: 'Вы невероятно красивая!',
+      nextSceneId: 's5_10',
+      sfx: z5('Что_ А… Спасибо!'),
+    },
+    {
+      label: 'Мы с вами как лучший певица и танцор!',
+      nextSceneId: 's5_10',
+      sfx: z5('Ну где-нибудь в альтернативной вселенной да!'),
+    },
+    {
+      label: 'Вы как будто с открытки!',
+      nextSceneId: 's5_10',
+      sfx: z5('Хаха надеюсь, вы как-нибудь придете на мою выставку!'),
+    },
+  ],
+  s11_2: [
+    { label: 'Налево', nextSceneId: 's11_4' },
+    { label: 'Направо', nextSceneId: 's11_3' },
+  ],
+  s11_5: [
+    { label: 'Налево', nextSceneId: 's11_3' },
+    { label: 'Направо', nextSceneId: 's11_6' },
+  ],
+  s11_8: [
+    { label: 'Налево', nextSceneId: 's11_9' },
+    { label: 'Направо', nextSceneId: 's11_9' },
+  ],
+  s11_10: [
+    { label: 'Налево', nextSceneId: 's11_12' },
+    { label: 'Направо', nextSceneId: 's11_11' },
+  ],
+  s11_13: [
+    { label: 'Налево', nextSceneId: 's11_14' },
+    { label: 'Направо', nextSceneId: 's11_15' },
+  ],
+};
+
+// Кадры с кнопками «Налево» / «Направо» в одну строку.
+const CHOICE_LAYOUT: Record<string, 'row'> = {
+  s11_2: 'row',
+  s11_5: 'row',
+  s11_8: 'row',
+  s11_10: 'row',
+  s11_13: 'row',
+};
+
+// Кадры мини-игры «Угадай мелодию» (сцена 5): кнопка «Ответ» проигрывает полную мелодию.
+const S5_GAME_ACTIONS: Record<string, string> = {
+  s5_4: 'Золото.mp3',
+  s5_5: 'Нойз.mp3',
+  s5_6: 'Дмитриенко.mp3',
+  s5_7: 'Свинки.mp3',
 };
 
 // Звуки на ЗТМ (id кадра → звук с задержкой после затемнения).
-const FADE_SFX: Record<string, { src: string; delayMs?: number }> = {};
+const FADE_SFX: Record<string, { src: string; delayMs?: number }> = {
+  s1_12: { src: z1('Взрыв') },
+};
 
 function buildScenes(defs: SceneDef[]): Scene[] {
   // Плоский список id всех кадров, чтобы связать nextSceneId по порядку.
@@ -234,7 +458,7 @@ function buildScenes(defs: SceneDef[]): Scene[] {
         id,
         src: `/${DIR[def.n]}/${file}`,
         effect: EFFECTS[def.n % EFFECTS.length],
-        nextSceneId: next, // у самого последнего кадра будет undefined → экран «Конец»
+        nextSceneId: def.next?.[i + 1] ?? next,
       };
       const music = def.music?.[i + 1];
       if (music !== undefined) scene.music = music;
@@ -245,7 +469,13 @@ function buildScenes(defs: SceneDef[]): Scene[] {
       const auto = def.auto?.[i + 1];
       if (auto !== undefined) scene.autoAdvanceMs = auto;
       if (BUTTONS[id]) scene.button = BUTTONS[id];
+      if (CHOICES[id]) scene.choices = CHOICES[id];
+      if (CHOICE_LAYOUT[id]) scene.choiceLayout = CHOICE_LAYOUT[id];
       if (FADE_SFX[id]) scene.fadeOutSfx = FADE_SFX[id];
+      if (S5_GAME_ACTIONS[id]) {
+        scene.actionLabel = 'Ответ';
+        scene.actionSfx = g5(S5_GAME_ACTIONS[id]);
+      }
       // Кадры-«картинки» квиза (сцена 3) — кнопка «Ответ» внизу.
       if (file.includes('картинка')) scene.actionLabel = 'Ответ';
 
@@ -262,9 +492,209 @@ function buildScenes(defs: SceneDef[]): Scene[] {
   return scenes;
 }
 
+const S5_EXTRA_SCENES: Scene[] = [
+  {
+    id: 's5_8_vid',
+    type: 'video',
+    src: g5('Видео.mp4'),
+    effect: EFFECTS[5 % EFFECTS.length],
+    nextSceneId: 's5_8_btn',
+  },
+  {
+    id: 's5_8_btn',
+    src: `/${DIR[5]}/8 кадр.png`,
+    effect: EFFECTS[5 % EFFECTS.length],
+    actionLabel: 'Ответ',
+    nextSceneId: 's5_8_ans',
+  },
+  {
+    id: 's5_8_ans',
+    type: 'video',
+    src: g5('Ответ.mp4'),
+    effect: EFFECTS[5 % EFFECTS.length],
+    nextSceneId: 's5_9',
+  },
+];
+
+const S9_QUIZ_SCENES: Scene[] = [
+  {
+    id: 's9_q1',
+    src: `/${DIR[9]}/2 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    music: z9('9 Сцена фоновая музыка 2'),
+    text: 'Какой латиноамериканский танец переводится как «праздник» или «веселье», а его ритмы пришли из древних ритуальных танцев?',
+    quiz: true,
+    choices: [
+      { label: 'Самба', nextSceneId: 's9_q2', correct: true },
+      { label: 'Пасадобль', correct: false },
+      { label: 'Джайв', correct: false },
+    ],
+  },
+  {
+    id: 's9_q2',
+    src: `/${DIR[9]}/2 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Как называется самый масштабный и престижный многодневный турнир России, наш внутренний «Блэкпул»?',
+    quiz: true,
+    choices: [
+      { label: 'ROC', nextSceneId: 's9_q3', correct: true },
+      { label: 'Russian Masters', correct: false },
+      { label: 'Кубок Спартака', correct: false },
+    ],
+  },
+  {
+    id: 's9_q3',
+    src: `/${DIR[9]}/2 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Какое главное требование судьи предъявляют к хвату рук (левая рука партнера и правая партнерши) в стандартной программе?',
+    quiz: true,
+    choices: [
+      { label: 'замок из пальцев', correct: false },
+      { label: 'расстояние между запястьями', correct: false },
+      { label: 'легко касание ладоней без сжатия пальцев', nextSceneId: 's9_q4', correct: true },
+    ],
+  },
+  {
+    id: 's9_q4',
+    src: `/${DIR[9]}/2 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Кому принадлежит абсолютный рекорд — 13 побед подряд на Блэкпульском фестивале в Профессионалах латины?',
+    quiz: true,
+    choices: [
+      { label: 'Рикардо Кокки', correct: false },
+      { label: 'Михаэль Малитовски', correct: false },
+      { label: 'Брайан Ватсон', nextSceneId: 's9_q5', correct: true },
+    ],
+  },
+  {
+    id: 's9_q5',
+    src: `/${DIR[9]}/2 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Чьей легендарной фразой «Танцуйте и будьте счастливы!» уже много лет открываются турниры в Кремле?',
+    quiz: true,
+    choices: [
+      { label: 'Станислав Попов', nextSceneId: 's9_2_win', correct: true },
+      { label: 'Владимир Марченко', correct: false },
+      { label: 'Сергей Рюпин', correct: false },
+    ],
+  },
+  {
+    id: 's9_2_win',
+    src: `/${DIR[9]}/2 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    sfx: [z9('Вы один из лучших бальных танцоров в мире!')],
+    nextSceneId: 's9_3',
+    autoAdvanceMs: 1,
+  },
+];
+
+const S9_IR_QUIZ_SCENES: Scene[] = [
+  {
+    id: 's9_ir_q1',
+    src: `/${DIR[9]}/4 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    music: z9('9 Сцена фоновая музыка 4'),
+    text: 'Как в дипломатии называется официальный документ с выражением позиции или протеста одной страны другой?',
+    quiz: true,
+    choices: [
+      { label: 'коммюнике', correct: false },
+      { label: 'дипломатическая нота', nextSceneId: 's9_ir_q2', correct: true },
+      { label: 'конвенция', nextSceneId: 's9_ir_q2', correct: true },
+    ],
+  },
+  {
+    id: 's9_ir_q2',
+    src: `/${DIR[9]}/4 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Как называется официальный отказ государства от договора (выход из него)?',
+    quiz: true,
+    choices: [
+      { label: 'сегрегация', correct: false },
+      { label: 'денонсация', nextSceneId: 's9_ir_q3', correct: true },
+      { label: 'аннексия', correct: false },
+    ],
+  },
+  {
+    id: 's9_ir_q3',
+    src: `/${DIR[9]}/4 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Как в истории называют войны XIX века, которые Великобритания навязала Китаю, чтобы заставить его открыть порты для торговли конкретным товаром?',
+    quiz: true,
+    choices: [
+      { label: 'Опиумные войны', nextSceneId: 's9_ir_q4', correct: true },
+      { label: 'Чайные войны', correct: false },
+      { label: 'Шелковые войны', correct: false },
+    ],
+  },
+  {
+    id: 's9_ir_q4',
+    src: `/${DIR[9]}/4 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'Как называют формальный юридический повод для объявления войны (например, убийство эрцгерцога в 1914 году)?',
+    quiz: true,
+    choices: [
+      { label: 'Казус белли', nextSceneId: 's9_ir_q5', correct: true },
+      { label: 'Статус-кво', correct: false },
+      { label: 'Ультиматум', correct: false },
+    ],
+  },
+  {
+    id: 's9_ir_q5',
+    src: `/${DIR[9]}/4 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    text: 'В 1989 году СССР расплатился с PepsiCo за газировку военным флотом: 17 подлодками и тремя кораблями. Какой статус из-за этого на пару дней получила компания?',
+    quiz: true,
+    choices: [
+      { label: 'Официальный спонсор ВМФ СССР', correct: false },
+      { label: 'Крупнейший частный экспортер вооружения', correct: false },
+      { label: 'Шестая военно-морская армия мира', nextSceneId: 's9_4_win', correct: true },
+    ],
+  },
+  {
+    id: 's9_4_win',
+    src: `/${DIR[9]}/4 кадр.png`,
+    effect: EFFECTS[9 % EFFECTS.length],
+    sfx: [z9('Вы лучшие в Международных отношениях! Проходите!')],
+    fadeOut: true,
+    nextSceneId: 's10_1',
+    autoAdvanceMs: 1,
+  },
+];
+
+const CREDITS_SCENE: Scene = {
+  id: 'credits',
+  type: 'credits',
+  src: '',
+  credits: CREDITS_CAST,
+  music: null,
+};
+
+function buildStoryScenes() {
+  const scenes = buildScenes(SCENES);
+  const s5InsertAt = scenes.findIndex((scene) => scene.id === 's5_9');
+  if (s5InsertAt !== -1) scenes.splice(s5InsertAt, 0, ...S5_EXTRA_SCENES);
+
+  const insertAt = scenes.findIndex((scene) => scene.id === 's9_3');
+  if (insertAt !== -1) scenes.splice(insertAt, 0, ...S9_QUIZ_SCENES);
+  const s9_2 = scenes.find((scene) => scene.id === 's9_2');
+  if (s9_2) s9_2.nextSceneId = 's9_q1';
+
+  const s9_4 = scenes.find((scene) => scene.id === 's9_4');
+  if (s9_4) {
+    s9_4.fadeOut = false;
+    s9_4.fadeOutSfx = undefined;
+    s9_4.nextSceneId = 's9_ir_q1';
+  }
+
+  const insertIrAt = scenes.findIndex((scene) => scene.id === 's10_1');
+  if (insertIrAt !== -1) scenes.splice(insertIrAt, 0, ...S9_IR_QUIZ_SCENES);
+
+  return [...scenes, CREDITS_SCENE];
+}
+
 export const story: Story = {
   startSceneId: 's0_1',
-  scenes: buildScenes(SCENES),
+  scenes: buildStoryScenes(),
 };
 
 export type SceneMenuItem = {

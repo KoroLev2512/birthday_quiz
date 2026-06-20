@@ -16,6 +16,7 @@ class AudioController {
   private bgSrc: string | null = null;
   private voiceEl: HTMLAudioElement | null = null;
   private voiceSrc: string | null = null;
+  private uiCtx: AudioContext | null = null;
   private sfxQueue: (string | number)[] = [];
   private sfxEl: HTMLAudioElement | null = null;
   private sfxBusy = false;
@@ -35,6 +36,13 @@ class AudioController {
       this.bg.volume = 0.18;
     }
     return this.bg;
+  }
+
+  private ensureUiCtx(): AudioContext | null {
+    const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!this.uiCtx) this.uiCtx = new AudioCtx();
+    return this.uiCtx;
   }
 
   /** Apply a scene's `music` field. `undefined` keeps the current track. */
@@ -74,6 +82,52 @@ class AudioController {
     if (this.bg && this.bg.paused && this.bgSrc) {
       this.bg.play().catch(() => {});
     }
+    this.uiCtx?.resume().catch(() => {});
+  }
+
+  playUiCue(kind: 'correct' | 'wrong'): void {
+    const ctx = this.ensureUiCtx();
+    if (!ctx) return;
+
+    const now = ctx.currentTime + 0.01;
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.0001, now);
+
+    if (kind === 'correct') {
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      osc1.type = 'triangle';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, now);
+      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
+      osc2.frequency.setValueAtTime(659.25, now);
+      osc2.frequency.exponentialRampToValueAtTime(987.77, now + 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      osc1.connect(gain);
+      osc2.connect(gain);
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.28);
+      osc2.stop(now + 0.28);
+      return;
+    }
+
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.22);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(900, now);
+    filter.Q.value = 1;
+    gain.gain.exponentialRampToValueAtTime(0.09, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    osc.connect(filter);
+    filter.connect(gain);
+    osc.start(now);
+    osc.stop(now + 0.26);
   }
 
   /**
@@ -90,6 +144,9 @@ class AudioController {
     if (next === undefined) {
       this.sfxBusy = false;
       this.sfxEl = null;
+      const cb = this.onSfxIdle;
+      this.onSfxIdle = null;
+      cb?.();
       return;
     }
     this.sfxBusy = true;
@@ -118,6 +175,7 @@ class AudioController {
   clearSfx(): void {
     this.sfxQueue = [];
     this.sfxBusy = false;
+    this.onSfxIdle = null; // оборванная очередь не считается «доигравшей»
     if (this.sfxPauseTimer !== null) {
       window.clearTimeout(this.sfxPauseTimer);
       this.sfxPauseTimer = null;

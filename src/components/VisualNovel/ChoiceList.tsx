@@ -5,11 +5,15 @@ type ChoiceListProps = {
   onChoose: (choice: SceneChoice) => void;
   /** Label of the choice currently flagged as a wrong quiz answer (for the shake). */
   wrongLabel?: string | null;
+  layout?: 'row' | 'column';
 };
 
-export function ChoiceList({ choices, onChoose, wrongLabel }: ChoiceListProps) {
+export function ChoiceList({ choices, onChoose, wrongLabel, layout = 'column' }: ChoiceListProps) {
   return (
-    <div className="vn-choices" data-testid="vn-choices">
+    <div
+      className={`vn-choices ${layout === 'row' ? 'vn-choices-row' : ''}`}
+      data-testid="vn-choices"
+    >
       {choices.map((choice) => {
         const isWrong = wrongLabel === choice.label;
         return (

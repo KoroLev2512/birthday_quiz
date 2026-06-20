@@ -4,11 +4,17 @@ import { useTypewriter } from '../../hooks/useTypewriter';
 import { getPrevSceneId, getSceneById, getStartScene } from '../../story/scenes';
 import type { Scene, SceneChoice } from '../../types/story';
 import { ChoiceList } from './ChoiceList';
+import { CreditsRoll } from './CreditsRoll';
 import { DialogueBox } from './DialogueBox';
+import { SceneLayer } from './SceneLayer';
 import { SceneStage } from './SceneStage';
 import { StartMenu } from './StartMenu';
 
 const WRONG_FLASH_MS = 600;
+const ANSWER_FLASH_MS = 420;
+
+/** Кадры с «Охраной» в сцене 11 — «Назад» возвращает на кадр с выбором. */
+const S11_GUARD = new Set(['s11_3', 's11_7', 's11_11', 's11_14']);
 
 export function VisualNovel() {
   const [inMenu, setInMenu] = useState(true);
@@ -16,17 +22,27 @@ export function VisualNovel() {
   const [currentScene, setCurrentScene] = useState<Scene | undefined>(getStartScene);
   const [isEnding, setIsEnding] = useState(false);
   const [wrongLabel, setWrongLabel] = useState<string | null>(null);
+  const [answerFlash, setAnswerFlash] = useState<'correct' | 'wrong' | null>(null);
   // id следующей сцены, ожидающей открытия после ЗТМ (экран чёрный, ждём клик).
   const [pendingNext, setPendingNext] = useState<string | null>(null);
   // Кнопка-действие может появляться с задержкой (см. button.delayMs).
   const [buttonVisible, setButtonVisible] = useState(false);
 
   const fadeSfxTimer = useRef<number | null>(null);
+  const returnSceneId = useRef<string | null>(null);
+  const answerFlashTimer = useRef<number | null>(null);
   const cancelFadeSfx = useCallback(() => {
     if (fadeSfxTimer.current !== null) {
       window.clearTimeout(fadeSfxTimer.current);
       fadeSfxTimer.current = null;
     }
+  }, []);
+  const clearAnswerFlash = useCallback(() => {
+    if (answerFlashTimer.current !== null) {
+      window.clearTimeout(answerFlashTimer.current);
+      answerFlashTimer.current = null;
+    }
+    setAnswerFlash(null);
   }, []);
 
   const text = currentScene?.text ?? '';
@@ -43,12 +59,25 @@ export function VisualNovel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
-  // Показ кнопки-действия: сразу или с задержкой button.delayMs.
+  // Показ кнопки-действия: сразу, после sfx или с задержкой button.delayMs.
   useEffect(() => {
     const btn = currentScene?.button;
     if (inMenu || !btn) {
       setButtonVisible(false);
       return;
+    }
+    if (btn.afterSfx) {
+      setButtonVisible(false);
+      const show = () => setButtonVisible(true);
+      // sfx-эффект сцены объявлен выше; 0 ms — дать очереди стартовать.
+      const t = window.setTimeout(() => {
+        if (audio.sfxActive) audio.onSfxIdle = show;
+        else show();
+      }, 0);
+      return () => {
+        window.clearTimeout(t);
+        if (audio.onSfxIdle === show) audio.onSfxIdle = null;
+      };
     }
     if (!btn.delayMs) {
       setButtonVisible(true);
@@ -64,23 +93,27 @@ export function VisualNovel() {
     const scene = getSceneById(firstId);
     if (!scene) return;
     audio.clearSfx();
+    returnSceneId.current = null;
+    clearAnswerFlash();
     setCurrentScene(scene);
     setIsEnding(false);
     setWrongLabel(null);
     setPendingNext(null);
     setInMenu(false);
     setSession((s) => s + 1);
-  }, []);
+  }, [clearAnswerFlash]);
 
   const openMenu = useCallback(() => {
     audio.stopMusic();
     audio.stopVoice();
     audio.clearSfx();
     cancelFadeSfx();
+    returnSceneId.current = null;
+    clearAnswerFlash();
     setIsEnding(false);
     setPendingNext(null);
     setInMenu(true);
-  }, [cancelFadeSfx]);
+  }, [cancelFadeSfx, clearAnswerFlash]);
 
   const goToScene = useCallback((nextId: string) => {
     const nextScene = getSceneById(nextId);
@@ -92,9 +125,11 @@ export function VisualNovel() {
     // Звуки «листаются» вместе с кадром: обрываем очередь предыдущего кадра,
     // звуки нового запустит аудио-эффект по смене сцены.
     audio.clearSfx();
+    returnSceneId.current = null;
+    clearAnswerFlash();
     setCurrentScene(nextScene);
     setWrongLabel(null);
-  }, []);
+  }, [clearAnswerFlash]);
 
   // Переход вперёд: либо в чёрный (ЗТМ), либо на следующий кадр, либо в конец.
   // Используется и кликом/клавишей, и авто-переходом по таймингу.
@@ -102,6 +137,7 @@ export function VisualNovel() {
     (scene: Scene) => {
       if (scene.fadeOut && scene.nextSceneId) {
         setPendingNext(scene.nextSceneId);
+        audio.stopMusic();
         const fx = scene.fadeOutSfx;
         if (fx) {
           if (fadeSfxTimer.current !== null) window.clearTimeout(fadeSfxTimer.current);
@@ -127,7 +163,15 @@ export function VisualNovel() {
       return;
     }
 
+    // После экрана «Конец» одним кликом переходим к титрам.
+    if (isEnding) {
+      setIsEnding(false);
+      goToScene('credits');
+      return;
+    }
+
     if (!currentScene) return;
+    if ((currentScene.id === 's9_2_win' || currentScene.id === 's9_4_win') && audio.sfxActive) return;
     if (currentScene.choices?.length || currentScene.button) return;
 
     if (!done) {
@@ -136,7 +180,7 @@ export function VisualNovel() {
     }
 
     goForward(currentScene);
-  }, [inMenu, pendingNext, currentScene, done, finish, goToScene, goForward]);
+  }, [inMenu, pendingNext, isEnding, currentScene, done, finish, goToScene, goForward]);
 
   const goBack = useCallback(() => {
     if (inMenu) return;
@@ -152,10 +196,14 @@ export function VisualNovel() {
       setIsEnding(false);
       return;
     }
+    if (currentScene?.type === 'credits') {
+      goToScene('s16_4');
+      return;
+    }
 
     const prevId = getPrevSceneId(currentScene?.id);
     if (prevId) goToScene(prevId);
-  }, [inMenu, pendingNext, isEnding, currentScene, goToScene]);
+  }, [inMenu, pendingNext, isEnding, currentScene, goToScene, cancelFadeSfx]);
 
   const wrongTimer = useRef<number | null>(null);
   const handleChoose = useCallback(
@@ -163,18 +211,47 @@ export function VisualNovel() {
       audio.resume();
       if (!currentScene) return;
 
-      if (currentScene.quiz && choice.correct === false) {
-        if (currentScene.wrongSfx) audio.playSfx(currentScene.wrongSfx);
-        setWrongLabel(choice.label);
-        if (wrongTimer.current !== null) window.clearTimeout(wrongTimer.current);
-        wrongTimer.current = window.setTimeout(() => setWrongLabel(null), WRONG_FLASH_MS);
-        return;
+      if (currentScene.quiz) {
+        if (choice.correct === false) {
+          clearAnswerFlash();
+          audio.playUiCue('wrong');
+          if (currentScene.wrongSfx) audio.playSfx(currentScene.wrongSfx);
+          setAnswerFlash('wrong');
+          setWrongLabel(choice.label);
+          if (wrongTimer.current !== null) window.clearTimeout(wrongTimer.current);
+          wrongTimer.current = window.setTimeout(() => {
+            setWrongLabel(null);
+            setAnswerFlash(null);
+          }, WRONG_FLASH_MS);
+          return;
+        }
+
+        if (choice.correct === true) {
+          clearAnswerFlash();
+          audio.playUiCue('correct');
+          setAnswerFlash('correct');
+          answerFlashTimer.current = window.setTimeout(() => {
+            setAnswerFlash(null);
+            if (choice.nextSceneId) {
+              if (S11_GUARD.has(choice.nextSceneId)) returnSceneId.current = currentScene.id;
+              else returnSceneId.current = null;
+              goToScene(choice.nextSceneId);
+            } else {
+              setIsEnding(true);
+            }
+          }, ANSWER_FLASH_MS);
+          return;
+        }
       }
 
-      if (choice.nextSceneId) goToScene(choice.nextSceneId);
-      else setIsEnding(true);
+      if (choice.nextSceneId) {
+        if (choice.sfx) audio.playSfx(choice.sfx);
+        if (S11_GUARD.has(choice.nextSceneId)) returnSceneId.current = currentScene.id;
+        else returnSceneId.current = null;
+        goToScene(choice.nextSceneId);
+      } else setIsEnding(true);
     },
-    [currentScene, goToScene],
+    [clearAnswerFlash, currentScene, goToScene],
   );
 
   // Авто-переход по таймингу. Не работает в меню, на чёрном экране и на
@@ -191,8 +268,24 @@ export function VisualNovel() {
     ) {
       return;
     }
-    const timer = window.setTimeout(() => goForward(currentScene), currentScene.autoAdvanceMs);
-    return () => window.clearTimeout(timer);
+    const scene = currentScene;
+    let advanced = false;
+    const fire = () => {
+      if (advanced) return;
+      advanced = true;
+      goForward(scene);
+    };
+    // Длительность кадра — это минимум: если звук ещё играет, ждём его окончания,
+    // чтобы хвост последовательности (например Лай) не обрывался.
+    const timer = window.setTimeout(() => {
+      if (audio.sfxActive) audio.onSfxIdle = fire;
+      else fire();
+    }, scene.autoAdvanceMs);
+
+    return () => {
+      window.clearTimeout(timer);
+      if (audio.onSfxIdle === fire) audio.onSfxIdle = null;
+    };
   }, [inMenu, pendingNext, currentScene, done, goForward]);
 
   // Клавиатура: Space / Enter / → — вперёд, ← — назад.
@@ -230,9 +323,10 @@ export function VisualNovel() {
   const showDialogue = Boolean(currentScene.text || currentScene.speaker);
   const showChoices = Boolean(currentScene.choices?.length && done);
   const showCursor = done && !currentScene.choices?.length && !isEnding;
+  const isCredits = currentScene.type === 'credits';
 
   return (
-    <div className="vn-root" onClick={advance} data-testid="vn-root">
+    <div className="vn-root" onClick={isCredits ? undefined : advance} data-testid="vn-root">
       <button
         type="button"
         className="vn-menu-btn"
@@ -245,14 +339,34 @@ export function VisualNovel() {
         ☰ Сцены
       </button>
 
-      <SceneStage key={session} scene={currentScene} />
+      {!isCredits &&
+        (currentScene.type === 'video' ? (
+          <SceneLayer scene={currentScene} onVideoEnd={() => goForward(currentScene)} />
+        ) : (
+          <SceneStage key={session} scene={currentScene} />
+        ))}
+
+      {isCredits && !isEnding && <CreditsRoll onComplete={openMenu} />}
 
       {showDialogue && (
         <DialogueBox speaker={currentScene.speaker} text={displayed} showCursor={showCursor} />
       )}
 
       {showChoices && currentScene.choices && (
-        <ChoiceList choices={currentScene.choices} onChoose={handleChoose} wrongLabel={wrongLabel} />
+        <ChoiceList
+          choices={currentScene.choices}
+          onChoose={handleChoose}
+          wrongLabel={wrongLabel}
+          layout={currentScene.choiceLayout}
+        />
+      )}
+
+      {answerFlash && (
+        <div
+          className={`vn-answer-flash ${answerFlash === 'correct' ? 'vn-answer-flash-correct' : 'vn-answer-flash-wrong'}`}
+          data-testid="vn-answer-flash"
+          aria-hidden
+        />
       )}
 
       {currentScene.actionLabel && (
@@ -262,6 +376,11 @@ export function VisualNovel() {
           data-testid="vn-answer-btn"
           onClick={(event) => {
             event.stopPropagation();
+            audio.resume();
+            if (currentScene.actionSfx) {
+              audio.playSfx(currentScene.actionSfx);
+              return;
+            }
             advance();
           }}
         >
@@ -277,7 +396,10 @@ export function VisualNovel() {
           onClick={(event) => {
             event.stopPropagation();
             audio.resume();
-            goToScene(currentScene.button!.nextSceneId);
+            const btn = currentScene.button!;
+            const target = returnSceneId.current ?? btn.nextSceneId;
+            returnSceneId.current = null;
+            goToScene(target);
           }}
         >
           {currentScene.button.label}
