@@ -73,8 +73,8 @@ const z14 = (name: string) => `/${DIR[14]}/Звуки/${name.normalize('NFC')}.m
 /** Путь к озвучке/музыке в подпапке «Звуки» сцены 15. */
 const z15 = (name: string) => `/${DIR[15]}/Звуки/${name.normalize('NFC')}.mp3`;
 
-/** Имена кадров «A кадр.png» … «B кадр.png». */
-const kadr = (a: number, b: number, ext = 'png') =>
+/** Имена кадров «A кадр.webp» … «B кадр.webp». */
+const kadr = (a: number, b: number, ext = 'webp') =>
   Array.from({ length: b - a + 1 }, (_, i) => `${a + i} кадр.${ext}`);
 
 const S16_PAPA = 'Папа';
@@ -83,12 +83,12 @@ const g3 = (name: string) => `/${DIR[3]}/${name.normalize('NFC')}`;
 
 /** Квиз суда на 5-м кадре: картинки и ответы поверх зала. */
 const S3_QUIZ = [
-  { image: g3('1 картинка.png'), answer: g3('1 Ответ.jpg') },
-  { image: g3('2 картинка.png'), answer: g3('2 ответ.jpg') },
-  { image: g3('3 картинка.png'), answer: g3('3 ответ.jpg') },
-  { image: g3('4 картинка.png'), answer: g3('4 ответ.jpg') },
-  { image: g3('5 картинка.png'), answer: g3('5 ответ.JPG') },
-  { image: g3('6 картинка.png'), answer: g3('6 ответ.JPG') },
+  { image: g3('1 картинка.webp'), answer: g3('1 Ответ.webp') },
+  { image: g3('2 картинка.webp'), answer: g3('2 ответ.webp') },
+  { image: g3('3 картинка.webp'), answer: g3('3 ответ.webp') },
+  { image: g3('4 картинка.webp'), answer: g3('4 ответ.webp') },
+  { image: g3('5 картинка.webp'), answer: g3('5 ответ.webp') },
+  { image: g3('6 картинка.webp'), answer: g3('6 ответ.webp') },
 ];
 
 type SceneDef = {
@@ -223,7 +223,7 @@ const SCENES: SceneDef[] = [
   },
   {
     n: 5,
-    frames: [...kadr(1, 9), '10 кадр.jpg'],
+    frames: [...kadr(1, 9), '10 кадр.webp'],
     music: { 2: z5('Сцена 5 Фоновый звук') },
     sfx: {
       1: [z5('Лошадь')],
@@ -362,7 +362,7 @@ const SCENES: SceneDef[] = [
   },
   {
     n: 11,
-    frames: [...kadr(1, 18), '19 кадр.jpeg'],
+    frames: [...kadr(1, 18), '19 кадр.webp'],
     music: { 1: z11('11 Сцена Фоновая музыка') },
     sfx: {
       3: [z11('Охрана')],
@@ -489,7 +489,7 @@ const SCENES: SceneDef[] = [
   },
   {
     n: 16,
-    frames: ['1 кадр.png', '2 кадр.png', '3 кадр.png'],
+    frames: ['1 кадр.webp', '2 кадр.webp', '3 кадр.webp'],
     music: { 1: au(16, '16 сцена фоновая музыка') },
     sfx: {
       1: [au(16, 'Сестренка и братик!')],
@@ -707,7 +707,7 @@ function buildScenes(defs: SceneDef[]): Scene[] {
 const S2_EXTRA_SCENES: Scene[] = [
   {
     id: 's2_7a',
-    src: `/${DIR[2]}/7 кадр.png`,
+    src: `/${DIR[2]}/7 кадр.webp`,
     effect: EFFECTS[2 % EFFECTS.length],
     sfx: [z2('Вы что так сильно напились_ В Российской Империи нет места пьяницам!')],
     advanceAfterSfx: true,
@@ -715,7 +715,7 @@ const S2_EXTRA_SCENES: Scene[] = [
   },
   {
     id: 's2_7b',
-    src: `/${DIR[2]}/7 кадр.png`,
+    src: `/${DIR[2]}/7 кадр.webp`,
     effect: EFFECTS[2 % EFFECTS.length],
     sfx: [z2('В самом красивом городе нашей Империи, в Санкт-Петербурге!')],
     advanceAfterSfx: true,
@@ -723,7 +723,7 @@ const S2_EXTRA_SCENES: Scene[] = [
   },
   {
     id: 's2_7c',
-    src: `/${DIR[2]}/7 кадр.png`,
+    src: `/${DIR[2]}/7 кадр.webp`,
     effect: EFFECTS[2 % EFFECTS.length],
     sfx: [z2('Так и запишем в протокол. Матвей и Маша нарушили закон Российской Империи.')],
     advanceAfterSfx: true,
@@ -734,12 +734,12 @@ const S2_EXTRA_SCENES: Scene[] = [
 const S12_EXTRA_SCENES: Scene[] = [
   {
     id: 's12_1_pick',
-    src: `/${DIR[12]}/1 кадр.png`,
+    src: `/${DIR[12]}/1 кадр.webp`,
     effect: EFFECTS[12 % EFFECTS.length],
   },
   {
     id: 's12_1a',
-    src: `/${DIR[12]}/1 кадр.png`,
+    src: `/${DIR[12]}/1 кадр.webp`,
     effect: EFFECTS[12 % EFFECTS.length],
     sfx: [z12('Да кажется она там')],
     advanceAfterSfx: true,
@@ -747,7 +747,7 @@ const S12_EXTRA_SCENES: Scene[] = [
   },
   {
     id: 's12_1b',
-    src: `/${DIR[12]}/1 кадр.png`,
+    src: `/${DIR[12]}/1 кадр.webp`,
     effect: EFFECTS[12 % EFFECTS.length],
     sfx: [z12(' Кажется он побежал туда. Но как он пробежал через охрану_')],
     advanceAfterSfx: true,
@@ -758,7 +758,7 @@ const S12_EXTRA_SCENES: Scene[] = [
 const S5_EXTRA_SCENES: Scene[] = [
   {
     id: 's5_8_ans',
-    src: `/${DIR[5]}/8 кадр.png`,
+    src: `/${DIR[5]}/8 кадр.webp`,
     effect: EFFECTS[5 % EFFECTS.length],
     embedVideo: g5('Ответ.mp4'),
     embedVideoLoop: false,
@@ -766,7 +766,7 @@ const S5_EXTRA_SCENES: Scene[] = [
   },
   {
     id: 's5_11',
-    src: `/${DIR[5]}/11 кадр.png`,
+    src: `/${DIR[5]}/11 кадр.webp`,
     effect: EFFECTS[5 % EFFECTS.length],
     sfx: [z5('Вы что ищите это_ Я знаю, как туда попасть, идемте.')],
     fadeOut: true,
@@ -777,7 +777,7 @@ const S5_EXTRA_SCENES: Scene[] = [
 const S9_QUIZ_SCENES: Scene[] = [
   {
     id: 's9_q1',
-    src: `/${DIR[9]}/2 кадр.png`,
+    src: `/${DIR[9]}/2 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     music: z9('9 Сцена фоновая музыка 2'),
     text: 'Какой латиноамериканский танец переводится как «праздник» или «веселье», а его ритмы пришли из древних ритуальных танцев?',
@@ -790,7 +790,7 @@ const S9_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_q2',
-    src: `/${DIR[9]}/2 кадр.png`,
+    src: `/${DIR[9]}/2 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Как называется самый масштабный и престижный многодневный турнир России, наш внутренний «Блэкпул»?',
     quiz: true,
@@ -802,7 +802,7 @@ const S9_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_q3',
-    src: `/${DIR[9]}/2 кадр.png`,
+    src: `/${DIR[9]}/2 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Какое главное требование судьи предъявляют к хвату рук (левая рука партнера и правая партнерши) в стандартной программе?',
     quiz: true,
@@ -814,7 +814,7 @@ const S9_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_q4',
-    src: `/${DIR[9]}/2 кадр.png`,
+    src: `/${DIR[9]}/2 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Кому принадлежит абсолютный рекорд — 13 побед подряд на Блэкпульском фестивале в Профессионалах латины?',
     quiz: true,
@@ -826,7 +826,7 @@ const S9_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_q5',
-    src: `/${DIR[9]}/2 кадр.png`,
+    src: `/${DIR[9]}/2 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Чьей легендарной фразой «Танцуйте и будьте счастливы!» уже много лет открываются турниры в Кремле?',
     quiz: true,
@@ -838,7 +838,7 @@ const S9_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_2_win',
-    src: `/${DIR[9]}/2 кадр.png`,
+    src: `/${DIR[9]}/2 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     sfx: [z9('Вы один из лучших бальных танцоров в мире!')],
     nextSceneId: 's9_3',
@@ -849,7 +849,7 @@ const S9_QUIZ_SCENES: Scene[] = [
 const S9_IR_QUIZ_SCENES: Scene[] = [
   {
     id: 's9_ir_q1',
-    src: `/${DIR[9]}/4 кадр.png`,
+    src: `/${DIR[9]}/4 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     music: z9('9 Сцена фоновая музыка 4'),
     text: 'Как в дипломатии называется официальный документ с выражением позиции или протеста одной страны другой?',
@@ -862,7 +862,7 @@ const S9_IR_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_ir_q2',
-    src: `/${DIR[9]}/4 кадр.png`,
+    src: `/${DIR[9]}/4 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Как называется официальный отказ государства от договора (выход из него)?',
     quiz: true,
@@ -874,7 +874,7 @@ const S9_IR_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_ir_q3',
-    src: `/${DIR[9]}/4 кадр.png`,
+    src: `/${DIR[9]}/4 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Как в истории называют войны XIX века, которые Великобритания навязала Китаю, чтобы заставить его открыть порты для торговли конкретным товаром?',
     quiz: true,
@@ -886,7 +886,7 @@ const S9_IR_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_ir_q4',
-    src: `/${DIR[9]}/4 кадр.png`,
+    src: `/${DIR[9]}/4 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'Как называют формальный юридический повод для объявления войны (например, убийство эрцгерцога в 1914 году)?',
     quiz: true,
@@ -898,7 +898,7 @@ const S9_IR_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_ir_q5',
-    src: `/${DIR[9]}/4 кадр.png`,
+    src: `/${DIR[9]}/4 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     text: 'В 1989 году СССР расплатился с PepsiCo за газировку военным флотом: 17 подлодками и тремя кораблями. Какой статус из-за этого на пару дней получила компания?',
     quiz: true,
@@ -910,7 +910,7 @@ const S9_IR_QUIZ_SCENES: Scene[] = [
   },
   {
     id: 's9_4_win',
-    src: `/${DIR[9]}/4 кадр.png`,
+    src: `/${DIR[9]}/4 кадр.webp`,
     effect: EFFECTS[9 % EFFECTS.length],
     sfx: [z9('Вы лучшие в Международных отношениях! Проходите!')],
     fadeOut: true,
