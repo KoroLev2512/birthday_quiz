@@ -29,6 +29,9 @@ export function VisualNovel() {
   const [buttonVisible, setButtonVisible] = useState(false);
   const [embedVisible, setEmbedVisible] = useState(false);
   const [actionVisible, setActionVisible] = useState(false);
+  const [quizStep, setQuizStep] = useState(0);
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [quizAnswerVisible, setQuizAnswerVisible] = useState(false);
 
   const fadeSfxTimer = useRef<number | null>(null);
   const goForwardRef = useRef<(scene: Scene) => void>(() => {});
@@ -58,12 +61,14 @@ export function VisualNovel() {
   useEffect(() => {
     if (inMenu || !currentScene) return;
     const scene = currentScene;
+    audio.resume();
     audio.setMusic(scene.music);
-    if (scene.voice) audio.playVoice(scene.voice);
-    scene.sfx?.forEach((src) => audio.playSfx(src));
 
     let showEmbedAfterSfx: (() => void) | null = null;
     let ztmAfterSfx: (() => void) | null = null;
+    let advanceAfterSfxTimer: number | null = null;
+    let advanceAfterVoiceTimer: number | null = null;
+    let afterVoice: (() => void) | null = null;
     if (scene.embedVideoAfterSfx && scene.embedVideo) {
       setEmbedVisible(false);
       setActionVisible(false);
@@ -78,14 +83,44 @@ export function VisualNovel() {
       scene.nextSceneId &&
       (scene.fadeOut || scene.advanceAfterSfx)
     ) {
-      ztmAfterSfx = () => goForwardRef.current(scene);
-      audio.onSfxIdle = ztmAfterSfx;
+      ztmAfterSfx = () => {
+        const go = () => goForwardRef.current(scene);
+        const delay = scene.advanceAfterSfxDelayMs ?? 0;
+        if (delay) advanceAfterSfxTimer = window.setTimeout(go, delay);
+        else go();
+      };
+      window.setTimeout(() => {
+        audio.onSfxIdle = ztmAfterSfx;
+      }, 0);
+    } else if (scene.advanceAfterVoice && scene.voice) {
+      afterVoice = () => {
+        const go = () => goForwardRef.current(scene);
+        const delay = scene.advanceAfterVoiceDelayMs ?? 0;
+        if (delay) advanceAfterVoiceTimer = window.setTimeout(go, delay);
+        else go();
+      };
+      audio.onVoiceIdle = afterVoice;
     }
+
+    if (scene.voice) audio.playVoice(scene.voice);
+    scene.sfx?.forEach((src) => audio.playSfx(src));
 
     return () => {
       if (showEmbedAfterSfx && audio.onSfxIdle === showEmbedAfterSfx) audio.onSfxIdle = null;
       if (ztmAfterSfx && audio.onSfxIdle === ztmAfterSfx) audio.onSfxIdle = null;
+      if (afterVoice && audio.onVoiceIdle === afterVoice) audio.onVoiceIdle = null;
+      if (advanceAfterSfxTimer !== null) window.clearTimeout(advanceAfterSfxTimer);
+      if (advanceAfterVoiceTimer !== null) window.clearTimeout(advanceAfterVoiceTimer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneId, inMenu]);
+
+  // Сброс шага квиза при входе на кадр с overlayQuiz.
+  useEffect(() => {
+    if (inMenu || !currentScene?.overlayQuiz) return;
+    setQuizStep(0);
+    setQuizStarted(false);
+    setQuizAnswerVisible(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
@@ -269,6 +304,24 @@ export function VisualNovel() {
       return;
     }
 
+    // Квиз поверх кадра (сцена 3): «Ответ» открывает картинку, клик — следующий вопрос.
+    const quiz = currentScene.overlayQuiz;
+    if (quiz?.length) {
+      if (!quizStarted) {
+        setQuizStarted(true);
+        return;
+      }
+      if (!quizAnswerVisible) return;
+      const nextStep = quizStep + 1;
+      if (nextStep < quiz.length) {
+        setQuizStep(nextStep);
+        setQuizAnswerVisible(false);
+        return;
+      }
+      goForward(currentScene);
+      return;
+    }
+
     if (currentScene.choices?.length || (currentScene.button && buttonVisible)) return;
 
     if (!done) {
@@ -288,6 +341,9 @@ export function VisualNovel() {
     finish,
     goToScene,
     goForward,
+    quizAnswerVisible,
+    quizStarted,
+    quizStep,
   ]);
 
   const goBack = useCallback(() => {
@@ -305,13 +361,30 @@ export function VisualNovel() {
       return;
     }
     if (currentScene?.type === 'credits') {
-      goToScene('s16_4');
+      goToScene('s16_3');
       return;
+    }
+
+    const quiz = currentScene?.overlayQuiz;
+    if (quiz?.length) {
+      if (quizAnswerVisible) {
+        setQuizAnswerVisible(false);
+        return;
+      }
+      if (quizStarted) {
+        if (quizStep > 0) {
+          setQuizStep(quizStep - 1);
+          setQuizAnswerVisible(true);
+          return;
+        }
+        setQuizStarted(false);
+        return;
+      }
     }
 
     const prevId = getPrevSceneId(currentScene?.id);
     if (prevId) goToScene(prevId);
-  }, [inMenu, pendingNext, isEnding, currentScene, goToScene, cancelFadeSfx]);
+  }, [inMenu, pendingNext, isEnding, currentScene, goToScene, cancelFadeSfx, quizAnswerVisible, quizStarted, quizStep]);
 
   const wrongTimer = useRef<number | null>(null);
   const handleChoose = useCallback(
@@ -454,7 +527,20 @@ export function VisualNovel() {
 
   const showDialogue = Boolean(currentScene.text || currentScene.speaker);
   const showChoices = Boolean(currentScene.choices?.length && done);
-  const showCursor = done && !currentScene.choices?.length && !isEnding;
+  const overlayQuiz = currentScene.overlayQuiz;
+  const overlayQuizActive = Boolean(overlayQuiz?.length);
+  const overlaySrc =
+    overlayQuizActive && quizStarted
+      ? quizAnswerVisible
+        ? overlayQuiz![quizStep].answer
+        : overlayQuiz![quizStep].image
+      : null;
+  const showQuizAnswerBtn = overlayQuizActive && quizStarted && !quizAnswerVisible;
+  const showCursor =
+    done &&
+    !currentScene.choices?.length &&
+    !isEnding &&
+    (!overlayQuizActive || !quizStarted || quizAnswerVisible);
   const isCredits = currentScene.type === 'credits';
 
   return (
@@ -493,6 +579,16 @@ export function VisualNovel() {
         />
       )}
 
+      {overlaySrc && (
+        <img
+          key={overlaySrc}
+          src={overlaySrc}
+          alt=""
+          className="vn-embed-image"
+          data-testid="vn-embed-image"
+        />
+      )}
+
       {isCredits && !isEnding && <CreditsRoll onComplete={openMenu} />}
 
       {showDialogue && (
@@ -521,7 +617,8 @@ export function VisualNovel() {
         />
       )}
 
-      {currentScene.actionLabel && (!currentScene.actionAfterSfx || actionVisible) && (
+      {(showQuizAnswerBtn ||
+        (currentScene.actionLabel && (!currentScene.actionAfterSfx || actionVisible))) && (
         <button
           type="button"
           className="vn-answer-btn"
@@ -529,6 +626,10 @@ export function VisualNovel() {
           onClick={(event) => {
             event.stopPropagation();
             audio.resume();
+            if (showQuizAnswerBtn) {
+              setQuizAnswerVisible(true);
+              return;
+            }
             if (currentScene.actionSfx) {
               audio.clearSfx();
               audio.playSfx(currentScene.actionSfx);
@@ -537,7 +638,7 @@ export function VisualNovel() {
             goForward(currentScene);
           }}
         >
-          {currentScene.actionLabel}
+          {showQuizAnswerBtn ? 'Ответ' : currentScene.actionLabel}
         </button>
       )}
 

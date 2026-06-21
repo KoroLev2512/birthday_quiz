@@ -28,6 +28,18 @@ export function StartMenu({ onSelect }: StartMenuProps) {
             <span className="vn-menu-label">{item.label}</span>
           </button>
         ))}
+
+        <button
+          type="button"
+          className="vn-menu-item"
+          data-testid="vn-menu-credits-card"
+          onClick={() => onSelect('credits')}
+        >
+          <span className="vn-menu-thumb vn-menu-thumb-credits">
+            <span className="vn-menu-credits-icon">🎬</span>
+          </span>
+          <span className="vn-menu-label">Титры</span>
+        </button>
       </div>
     </div>
   );

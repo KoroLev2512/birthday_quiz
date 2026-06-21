@@ -555,6 +555,21 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* Карточка «Титры» в сетке меню */
+.vn-menu-thumb-credits {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 40%, rgb(120 80 220 / 45%), transparent 70%),
+    linear-gradient(160deg, rgb(40 26 70 / 95%), rgb(12 9 24 / 95%));
+}
+
+.vn-menu-credits-icon {
+  font-size: 2.6rem;
+  filter: drop-shadow(0 4px 12px rgb(120 70 220 / 60%));
+}
+
 /* ЗТМ: затемнение в чёрный. Клики проходят сквозь (pointer-events: none) на
    .vn-root, который и ловит клик для открытия следующей сцены. */
 .vn-blackout {
@@ -583,6 +598,22 @@ body {
   border-radius: 10px;
   object-fit: contain;
   background: rgb(0 0 0 / 55%);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 65%);
+  pointer-events: none;
+}
+
+.vn-embed-image {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  z-index: 8;
+  width: min(72vw, 880px);
+  max-height: 52vh;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgb(190 160 255 / 35%);
+  border-radius: 10px;
+  object-fit: contain;
+  background: rgb(0 0 0 / 45%);
   box-shadow: 0 16px 48px rgb(0 0 0 / 65%);
   pointer-events: none;
 }

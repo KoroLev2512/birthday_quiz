@@ -23,6 +23,12 @@ class AudioController {
   private sfxPauseTimer: number | null = null;
   /** Вызывается один раз, когда очередь звуков доиграла естественным образом. */
   onSfxIdle: (() => void) | null = null;
+  /** Вызывается один раз, когда голосовая реплика доиграла естественным образом. */
+  onVoiceIdle: (() => void) | null = null;
+
+  private srcUrl(src: string): string {
+    return src.startsWith('http') ? src : encodeURI(src);
+  }
 
   /** Идёт ли сейчас воспроизведение очереди звуков (или пауза в ней). */
   get sfxActive(): boolean {
@@ -68,7 +74,7 @@ class AudioController {
 
     const el = this.ensureBg();
     this.bgSrc = src;
-    el.src = src;
+    el.src = this.srcUrl(src);
     el.currentTime = 0;
     el.play().catch(() => {});
   }
@@ -85,6 +91,9 @@ class AudioController {
   resume(): void {
     if (this.bg && this.bg.paused && this.bgSrc) {
       this.bg.play().catch(() => {});
+    }
+    if (this.voiceEl && this.voiceEl.paused) {
+      this.voiceEl.play().catch(() => {});
     }
     this.uiCtx?.resume().catch(() => {});
   }
@@ -163,7 +172,7 @@ class AudioController {
       return;
     }
 
-    const a = new Audio(next);
+    const a = new Audio(this.srcUrl(next));
     a.volume = 0.85;
     this.sfxEl = a;
     const advance = () => {
@@ -193,20 +202,37 @@ class AudioController {
   /** Play a voice line, skipping if the same line is already the active one. */
   playVoice(src: string): void {
     if (src === this.voiceSrc && this.voiceEl && !this.voiceEl.ended) return;
+    const idle = this.onVoiceIdle;
     this.stopVoice();
-    const a = new Audio(src);
+    this.onVoiceIdle = idle;
+    const a = new Audio(this.srcUrl(src));
     a.volume = 1;
     this.voiceEl = a;
     this.voiceSrc = src;
+    a.onended = () => {
+      this.voiceEl = null;
+      const cb = this.onVoiceIdle;
+      this.onVoiceIdle = null;
+      cb?.();
+    };
+    a.onerror = () => {
+      this.voiceEl = null;
+      const cb = this.onVoiceIdle;
+      this.onVoiceIdle = null;
+      cb?.();
+    };
     a.play().catch(() => {});
   }
 
   stopVoice(): void {
     if (this.voiceEl) {
       this.voiceEl.pause();
+      this.voiceEl.onended = null;
+      this.voiceEl.onerror = null;
       this.voiceEl = null;
     }
     this.voiceSrc = null;
+    this.onVoiceIdle = null;
   }
 }
 

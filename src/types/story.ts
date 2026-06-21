@@ -1,5 +1,11 @@
 export type SceneEffect = 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right';
 
+/** Шаг квиза поверх фиксированного кадра (сцена 3): картинка вопроса и ответ. */
+export type OverlayQuizStep = {
+  image: string;
+  answer: string;
+};
+
 /** Одиночная кнопка-действие поверх кадра (например «НАЧАТЬ ИГРУ»). */
 export type SceneButton = {
   label: string;
@@ -43,6 +49,8 @@ export type Scene = {
   actionSfx?: string;
   /** Показать actionLabel только после окончания sfx кадра. */
   actionAfterSfx?: boolean;
+  /** Квиз поверх текущего кадра: серия картинок и ответов без смены фона. */
+  overlayQuiz?: OverlayQuizStep[];
   /** Видео поверх кадра (не на весь экран). */
   embedVideo?: string;
   /** Показать embedVideo после окончания sfx кадра. */
@@ -53,6 +61,12 @@ export type Scene = {
   fadeOut?: boolean;
   /** После окончания sfx автоматически перейти на nextSceneId (без ЗТМ). */
   advanceAfterSfx?: boolean;
+  /** Пауза (мс) после sfx перед advanceAfterSfx. */
+  advanceAfterSfxDelayMs?: number;
+  /** После окончания voice автоматически перейти на nextSceneId. */
+  advanceAfterVoice?: boolean;
+  /** Пауза (мс) после voice перед advanceAfterVoice. */
+  advanceAfterVoiceDelayMs?: number;
   /** Звук, который проигрывается во время ЗТМ (с задержкой delayMs после затемнения). */
   fadeOutSfx?: { src: string; delayMs?: number };
   /** When true, wrong choices (correct === false) buzz and keep the player on the scene. */
