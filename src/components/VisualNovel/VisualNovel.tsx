@@ -27,9 +27,13 @@ export function VisualNovel() {
   const [pendingNext, setPendingNext] = useState<string | null>(null);
   // Кнопка-действие может появляться с задержкой (см. button.delayMs).
   const [buttonVisible, setButtonVisible] = useState(false);
+  const [embedVisible, setEmbedVisible] = useState(false);
+  const [actionVisible, setActionVisible] = useState(false);
 
   const fadeSfxTimer = useRef<number | null>(null);
+  const goForwardRef = useRef<(scene: Scene) => void>(() => {});
   const returnSceneId = useRef<string | null>(null);
+  const pendingChoiceAdvance = useRef<string | null>(null);
   const answerFlashTimer = useRef<number | null>(null);
   const cancelFadeSfx = useCallback(() => {
     if (fadeSfxTimer.current !== null) {
@@ -53,9 +57,35 @@ export function VisualNovel() {
   const sceneId = currentScene?.id;
   useEffect(() => {
     if (inMenu || !currentScene) return;
-    audio.setMusic(currentScene.music);
-    if (currentScene.voice) audio.playVoice(currentScene.voice);
-    currentScene.sfx?.forEach((src) => audio.playSfx(src));
+    const scene = currentScene;
+    audio.setMusic(scene.music);
+    if (scene.voice) audio.playVoice(scene.voice);
+    scene.sfx?.forEach((src) => audio.playSfx(src));
+
+    let showEmbedAfterSfx: (() => void) | null = null;
+    let ztmAfterSfx: (() => void) | null = null;
+    if (scene.embedVideoAfterSfx && scene.embedVideo) {
+      setEmbedVisible(false);
+      setActionVisible(false);
+      showEmbedAfterSfx = () => {
+        setEmbedVisible(true);
+        if (scene.actionAfterSfx && scene.actionLabel) setActionVisible(true);
+      };
+      if (scene.sfx?.length) audio.onSfxIdle = showEmbedAfterSfx;
+      else showEmbedAfterSfx();
+    } else if (
+      scene.sfx?.length &&
+      scene.nextSceneId &&
+      (scene.fadeOut || scene.advanceAfterSfx)
+    ) {
+      ztmAfterSfx = () => goForwardRef.current(scene);
+      audio.onSfxIdle = ztmAfterSfx;
+    }
+
+    return () => {
+      if (showEmbedAfterSfx && audio.onSfxIdle === showEmbedAfterSfx) audio.onSfxIdle = null;
+      if (ztmAfterSfx && audio.onSfxIdle === ztmAfterSfx) audio.onSfxIdle = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
@@ -89,10 +119,26 @@ export function VisualNovel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
+  // Встроенное видео сразу при входе (без ожидания sfx).
+  useEffect(() => {
+    const scene = currentScene;
+    if (inMenu || !scene?.embedVideo || scene.embedVideoAfterSfx) {
+      if (!scene?.embedVideoAfterSfx) {
+        setEmbedVisible(false);
+        setActionVisible(false);
+      }
+      return;
+    }
+    setEmbedVisible(true);
+    setActionVisible(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneId, inMenu]);
+
   const startAt = useCallback((firstId: string) => {
     const scene = getSceneById(firstId);
     if (!scene) return;
     audio.clearSfx();
+    pendingChoiceAdvance.current = null;
     returnSceneId.current = null;
     clearAnswerFlash();
     setCurrentScene(scene);
@@ -125,6 +171,7 @@ export function VisualNovel() {
     // Звуки «листаются» вместе с кадром: обрываем очередь предыдущего кадра,
     // звуки нового запустит аудио-эффект по смене сцены.
     audio.clearSfx();
+    pendingChoiceAdvance.current = null;
     returnSceneId.current = null;
     clearAnswerFlash();
     setCurrentScene(nextScene);
@@ -151,6 +198,8 @@ export function VisualNovel() {
     [goToScene],
   );
 
+  goForwardRef.current = goForward;
+
   const advance = useCallback(() => {
     if (inMenu) return;
     audio.resume();
@@ -171,8 +220,56 @@ export function VisualNovel() {
     }
 
     if (!currentScene) return;
-    if ((currentScene.id === 's9_2_win' || currentScene.id === 's9_4_win') && audio.sfxActive) return;
-    if (currentScene.choices?.length || currentScene.button) return;
+
+    // Пропуск озвучки после выбора (ждём доигрывания или клика).
+    if (pendingChoiceAdvance.current) {
+      const nextId = pendingChoiceAdvance.current;
+      pendingChoiceAdvance.current = null;
+      audio.clearSfx();
+      goToScene(nextId);
+      return;
+    }
+
+    // Пропуск ожидания sfx перед кнопкой («СЫГРАТЬ» и т.п.).
+    if (currentScene.button?.afterSfx && !buttonVisible) {
+      audio.clearSfx();
+      setButtonVisible(true);
+      return;
+    }
+
+    // Пропуск реплики → встроенное видео + «Ответ» (сцена 5, кадр 8).
+    if (currentScene.embedVideoAfterSfx && !embedVisible && audio.sfxActive) {
+      audio.clearSfx();
+      setEmbedVisible(true);
+      if (currentScene.actionAfterSfx && currentScene.actionLabel) setActionVisible(true);
+      return;
+    }
+
+    // Пропуск sfx / голоса.
+    if (audio.sfxActive || audio.voiceActive) {
+      audio.clearSfx();
+      audio.stopVoice();
+      if (currentScene.id === 's9_2_win' || currentScene.id === 's9_4_win') {
+        goForward(currentScene);
+        return;
+      }
+      const blocked =
+        currentScene.embedVideoAfterSfx ||
+        currentScene.choices?.length ||
+        (currentScene.button && buttonVisible);
+      if (!blocked) {
+        goForward(currentScene);
+      }
+      return;
+    }
+
+    // Пропуск встроенного видео-ответа.
+    if (embedVisible && currentScene.embedVideo && currentScene.embedVideoLoop === false) {
+      goForward(currentScene);
+      return;
+    }
+
+    if (currentScene.choices?.length || (currentScene.button && buttonVisible)) return;
 
     if (!done) {
       finish();
@@ -180,7 +277,18 @@ export function VisualNovel() {
     }
 
     goForward(currentScene);
-  }, [inMenu, pendingNext, isEnding, currentScene, done, finish, goToScene, goForward]);
+  }, [
+    inMenu,
+    pendingNext,
+    isEnding,
+    currentScene,
+    embedVisible,
+    buttonVisible,
+    done,
+    finish,
+    goToScene,
+    goForward,
+  ]);
 
   const goBack = useCallback(() => {
     if (inMenu) return;
@@ -218,11 +326,22 @@ export function VisualNovel() {
           if (currentScene.wrongSfx) audio.playSfx(currentScene.wrongSfx);
           setAnswerFlash('wrong');
           setWrongLabel(choice.label);
-          if (wrongTimer.current !== null) window.clearTimeout(wrongTimer.current);
-          wrongTimer.current = window.setTimeout(() => {
-            setWrongLabel(null);
-            setAnswerFlash(null);
-          }, WRONG_FLASH_MS);
+          // Если у неправильного ответа есть кадр (некрасивая картинка) — переходим к нему;
+          // иначе просто подсвечиваем и остаёмся на вопросе.
+          if (choice.nextSceneId) {
+            const nextId = choice.nextSceneId;
+            answerFlashTimer.current = window.setTimeout(() => {
+              setAnswerFlash(null);
+              setWrongLabel(null);
+              goToScene(nextId);
+            }, ANSWER_FLASH_MS);
+          } else {
+            if (wrongTimer.current !== null) window.clearTimeout(wrongTimer.current);
+            wrongTimer.current = window.setTimeout(() => {
+              setWrongLabel(null);
+              setAnswerFlash(null);
+            }, WRONG_FLASH_MS);
+          }
           return;
         }
 
@@ -245,9 +364,21 @@ export function VisualNovel() {
       }
 
       if (choice.nextSceneId) {
-        if (choice.sfx) audio.playSfx(choice.sfx);
         if (S11_GUARD.has(choice.nextSceneId)) returnSceneId.current = currentScene.id;
         else returnSceneId.current = null;
+
+        if (choice.sfx) {
+          audio.clearSfx();
+          audio.playSfx(choice.sfx);
+          const nextId = choice.nextSceneId;
+          pendingChoiceAdvance.current = nextId;
+          audio.onSfxIdle = () => {
+            pendingChoiceAdvance.current = null;
+            goToScene(nextId);
+          };
+          return;
+        }
+
         goToScene(choice.nextSceneId);
       } else setIsEnding(true);
     },
@@ -263,6 +394,7 @@ export function VisualNovel() {
       !currentScene ||
       currentScene.choices?.length ||
       currentScene.button ||
+      currentScene.embedVideoAfterSfx ||
       !currentScene.autoAdvanceMs ||
       !done
     ) {
@@ -346,10 +478,30 @@ export function VisualNovel() {
           <SceneStage key={session} scene={currentScene} />
         ))}
 
+      {embedVisible && currentScene.embedVideo && (
+        <video
+          key={currentScene.embedVideo}
+          src={currentScene.embedVideo}
+          className="vn-embed-video"
+          autoPlay
+          playsInline
+          loop={currentScene.embedVideoLoop !== false}
+          onEnded={() => {
+            if (currentScene.embedVideoLoop === false) goForward(currentScene);
+          }}
+          data-testid="vn-embed-video"
+        />
+      )}
+
       {isCredits && !isEnding && <CreditsRoll onComplete={openMenu} />}
 
       {showDialogue && (
-        <DialogueBox speaker={currentScene.speaker} text={displayed} showCursor={showCursor} />
+        <DialogueBox
+          speaker={currentScene.speaker}
+          text={displayed}
+          showCursor={showCursor}
+          centered={currentScene.quiz}
+        />
       )}
 
       {showChoices && currentScene.choices && (
@@ -369,7 +521,7 @@ export function VisualNovel() {
         />
       )}
 
-      {currentScene.actionLabel && (
+      {currentScene.actionLabel && (!currentScene.actionAfterSfx || actionVisible) && (
         <button
           type="button"
           className="vn-answer-btn"
@@ -378,10 +530,11 @@ export function VisualNovel() {
             event.stopPropagation();
             audio.resume();
             if (currentScene.actionSfx) {
+              audio.clearSfx();
               audio.playSfx(currentScene.actionSfx);
               return;
             }
-            advance();
+            goForward(currentScene);
           }}
         >
           {currentScene.actionLabel}

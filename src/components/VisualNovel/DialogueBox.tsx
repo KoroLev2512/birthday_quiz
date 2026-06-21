@@ -2,9 +2,11 @@ type DialogueBoxProps = {
   speaker?: string;
   text: string;
   showCursor: boolean;
+  /** Центрировать текст (для вопросов квиза). */
+  centered?: boolean;
 };
 
-export function DialogueBox({ speaker, text, showCursor }: DialogueBoxProps) {
+export function DialogueBox({ speaker, text, showCursor, centered }: DialogueBoxProps) {
   return (
     <div className="vn-dialogue" data-testid="vn-dialogue">
       {speaker && (
@@ -12,7 +14,7 @@ export function DialogueBox({ speaker, text, showCursor }: DialogueBoxProps) {
           {speaker}
         </div>
       )}
-      <p className="vn-text" data-testid="vn-text">
+      <p className={`vn-text ${centered ? 'vn-text-center' : ''}`} data-testid="vn-text">
         {text}
         {showCursor && (
           <span className="vn-cursor" data-testid="vn-cursor">

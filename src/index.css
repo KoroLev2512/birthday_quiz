@@ -220,6 +220,10 @@ body {
   color: rgb(230 225 255 / 92%);
 }
 
+.vn-text-center {
+  text-align: center;
+}
+
 .vn-cursor {
   display: inline-block;
   margin-left: 0.5rem;
@@ -565,6 +569,22 @@ body {
 
 .vn-blackout-on {
   opacity: 1;
+}
+
+.vn-embed-video {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 8;
+  width: min(68vw, 820px);
+  max-height: 46vh;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgb(190 160 255 / 35%);
+  border-radius: 10px;
+  object-fit: contain;
+  background: rgb(0 0 0 / 55%);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 65%);
+  pointer-events: none;
 }
 
 /* Кнопка «Ответ» на кадрах-картинках — внизу по центру, не блокирует клавиши. */

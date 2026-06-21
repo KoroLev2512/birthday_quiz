@@ -41,8 +41,18 @@ export type Scene = {
   actionLabel?: string;
   /** Звук по кнопке actionLabel; если задан — клик проигрывает звук, а не листает кадр. */
   actionSfx?: string;
+  /** Показать actionLabel только после окончания sfx кадра. */
+  actionAfterSfx?: boolean;
+  /** Видео поверх кадра (не на весь экран). */
+  embedVideo?: string;
+  /** Показать embedVideo после окончания sfx кадра. */
+  embedVideoAfterSfx?: boolean;
+  /** Зацикливать встроенное видео (по умолчанию true). */
+  embedVideoLoop?: boolean;
   /** Сценарный ЗТМ: уход с этого кадра делается плавным затемнением в чёрный. */
   fadeOut?: boolean;
+  /** После окончания sfx автоматически перейти на nextSceneId (без ЗТМ). */
+  advanceAfterSfx?: boolean;
   /** Звук, который проигрывается во время ЗТМ (с задержкой delayMs после затемнения). */
   fadeOutSfx?: { src: string; delayMs?: number };
   /** When true, wrong choices (correct === false) buzz and keep the player on the scene. */

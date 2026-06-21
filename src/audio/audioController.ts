@@ -29,6 +29,10 @@ class AudioController {
     return this.sfxBusy;
   }
 
+  get voiceActive(): boolean {
+    return Boolean(this.voiceEl && !this.voiceEl.ended);
+  }
+
   private ensureBg(): HTMLAudioElement {
     if (!this.bg) {
       this.bg = new Audio();
