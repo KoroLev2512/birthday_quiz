@@ -40,6 +40,9 @@ const z1 = (name: string) => `/${DIR[1]}/Звуки/${name.normalize('NFC')}.mp3
 /** Путь к озвучке/доп. звукам в подпапке «Звуки» сцены 2. */
 const z2 = (name: string) => `/${DIR[2]}/Звуки/${name.normalize('NFC')}.mp3`;
 
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 3. */
+const z3 = (name: string) => `/${DIR[3]}/Звуки/${name.normalize('NFC')}.mp3`;
+
 /** Путь к озвучке/музыке в подпапке «Звуки» сцены 5. */
 const z5 = (name: string) => `/${DIR[5]}/Звуки/${name.normalize('NFC')}.mp3`;
 
@@ -204,10 +207,19 @@ const SCENES: SceneDef[] = [
   {
     n: 3,
     frames: kadr(1, 5),
+    // Музыка и озвучка — из подпапки «Звуки». Кадры 1 и 3 без реплик (нет файла).
     music: {
-      1: au(3, 'Сцена 3 - Фоновая музыка 1'),
-      5: au(3, 'Сцена 3 - Фоновая музыка 2'),
+      1: z3('Сцена 3 - Фоновая музыка 1'),
+      5: z3('Сцена 3 - Фоновая музыка 2'),
     },
+    sfx: {
+      2: [z3('Протестую! Это просто заблудившиеся брат и сестра. У обвинения нет доказательств преступного сговора!')],
+      4: [z3('Протестую! Цветные полотна еще не изобрели!')],
+      5: [
+        z3('Тишина в зале суда! Маша и Матвей, если вы правда брат и сестра, то вы должны сказать мне, что здесь изображено.'),
+      ],
+    },
+    auto: { 1: 4000, 2: 1000, 3: 4000, 4: 1000 },
   },
   {
     n: 4,
@@ -926,13 +938,34 @@ const CREDITS_SCENE: Scene = {
   credits: CREDITS_CAST,
 };
 
+// Вердикт суда: после квиза судья оглашает решение, затем ЗТМ + удар молотка.
+const S3_VERDICT_SCENE: Scene = {
+  id: 's3_verdict',
+  src: g3('5 кадр.webp'),
+  effect: EFFECTS[3 % EFFECTS.length],
+  sfx: [
+    z3('Всем встать! Именем ее Величества Маша и Матвей суд признал вас .. невиновными. Вы можете идти!'),
+  ],
+  advanceAfterSfx: true,
+  fadeOut: true,
+  fadeOutSfx: { src: z3('Звук молотка'), delayMs: 200 },
+  nextSceneId: 's4_1',
+};
+
 function buildStoryScenes() {
   const scenes = buildScenes(SCENES);
 
   scenes.push(...S2_EXTRA_SCENES, ...S12_EXTRA_SCENES);
 
   const s3_5 = scenes.find((scene) => scene.id === 's3_5');
-  if (s3_5) s3_5.overlayQuiz = S3_QUIZ;
+  if (s3_5) {
+    s3_5.overlayQuiz = S3_QUIZ;
+    // После квиза переходим к кадру вердикта (а не сразу в ЗТМ).
+    s3_5.fadeOut = false;
+    s3_5.nextSceneId = 's3_verdict';
+    const at = scenes.findIndex((scene) => scene.id === 's3_5');
+    scenes.splice(at + 1, 0, S3_VERDICT_SCENE);
+  }
 
   const s12_1 = scenes.find((scene) => scene.id === 's12_1');
   if (s12_1) {

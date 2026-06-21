@@ -584,7 +584,9 @@ export function VisualNovel() {
           key={overlaySrc}
           src={overlaySrc}
           alt=""
-          className="vn-embed-image"
+          className={`vn-embed-image vn-quiz-card ${
+            overlayQuizActive && quizAnswerVisible ? 'vn-quiz-card-answer' : 'vn-quiz-card-question'
+          }`}
           data-testid="vn-embed-image"
         />
       )}

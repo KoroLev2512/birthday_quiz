@@ -618,6 +618,53 @@ body {
   pointer-events: none;
 }
 
+/* Эффектное появление карточек квиза (key меняется → анимация повторяется). */
+.vn-quiz-card-question {
+  border-color: rgb(190 160 255 / 60%);
+  box-shadow:
+    0 16px 48px rgb(0 0 0 / 65%),
+    0 0 36px rgb(150 110 255 / 35%);
+  animation: vn-quiz-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.vn-quiz-card-answer {
+  border-color: rgb(120 230 170 / 75%);
+  box-shadow:
+    0 16px 48px rgb(0 0 0 / 65%),
+    0 0 48px rgb(70 230 150 / 55%);
+  animation: vn-quiz-reveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes vn-quiz-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -42%) scale(0.82);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes vn-quiz-reveal {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7) rotate(-3deg);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06) rotate(1.5deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0);
+  }
+}
+
 /* Кнопка «Ответ» на кадрах-картинках — внизу по центру, не блокирует клавиши. */
 .vn-answer-btn {
   position: absolute;
