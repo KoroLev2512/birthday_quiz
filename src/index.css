@@ -344,21 +344,28 @@ body {
   }
 }
 
-/* Квиз на упорядочивание (двигать элементы ↑/↓ и «Ответить»). */
-.vn-order {
+/* Квиз на упорядочивание (перетаскивание элементов + «Ответить»). */
+.vn-order-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset: 0;
   z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.vn-order {
   width: 100%;
   max-width: 520px;
-  transform: translate(-50%, -50%);
   padding: 1.6rem 1.6rem 1.4rem;
   border: 1px solid rgb(160 120 255 / 35%);
   border-radius: 14px;
   background: rgb(10 8 20 / 88%);
   backdrop-filter: blur(12px);
   box-shadow: 0 16px 56px rgb(0 0 0 / 60%);
+  pointer-events: auto;
 }
 
 .vn-order-wrong {
@@ -389,10 +396,31 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.6rem 0.7rem;
+  padding: 0.7rem 0.8rem;
   border: 1px solid rgb(160 120 255 / 25%);
   border-radius: 9px;
   background: rgb(20 14 40 / 85%);
+  cursor: grab;
+  user-select: none;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    transform 0.12s;
+}
+
+.vn-order-item:hover {
+  border-color: rgb(180 150 255 / 55%);
+}
+
+.vn-order-item:active {
+  cursor: grabbing;
+}
+
+.vn-order-item-drag {
+  opacity: 0.55;
+  border-color: rgb(190 160 255 / 80%);
+  background: rgb(60 38 120 / 85%);
+  transform: scale(1.02);
 }
 
 .vn-order-rank {
@@ -414,38 +442,12 @@ body {
   color: rgb(225 218 255 / 92%);
 }
 
-.vn-order-ctrls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.vn-order-move {
-  width: 1.9rem;
-  height: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgb(160 120 255 / 35%);
-  border-radius: 5px;
-  background: rgb(30 20 55 / 90%);
-  color: rgb(210 195 255 / 90%);
-  font-size: 0.6rem;
+.vn-order-grip {
+  font-size: 1.3rem;
   line-height: 1;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-
-.vn-order-move:hover:not(:disabled) {
-  border-color: rgb(180 150 255 / 75%);
-  background: rgb(70 45 140 / 80%);
-}
-
-.vn-order-move:disabled {
-  opacity: 0.3;
-  cursor: default;
+  letter-spacing: -0.1em;
+  color: rgb(180 160 230 / 70%);
+  cursor: grab;
 }
 
 .vn-order-submit {
