@@ -6,6 +6,15 @@ export type OverlayQuizStep = {
   answer: string;
 };
 
+/** Квиз на упорядочивание: двигать элементы до правильной последовательности. */
+export type OrderQuiz = {
+  title?: string;
+  /** Стартовый порядок (как показывается изначально). */
+  items: string[];
+  /** Правильный порядок. */
+  correct: string[];
+};
+
 /** Одиночная кнопка-действие поверх кадра (например «НАЧАТЬ ИГРУ»). */
 export type SceneButton = {
   label: string;
@@ -49,8 +58,12 @@ export type Scene = {
   actionSfx?: string;
   /** Показать actionLabel только после окончания sfx кадра. */
   actionAfterSfx?: boolean;
+  /** Фоновая музыка после окончания очереди sfx (например квиз сцены 3). */
+  musicAfterSfx?: string | null;
   /** Квиз поверх текущего кадра: серия картинок и ответов без смены фона. */
   overlayQuiz?: OverlayQuizStep[];
+  /** Квиз на упорядочивание (появляется после озвучки кадра). */
+  orderQuiz?: OrderQuiz;
   /** Видео поверх кадра (не на весь экран). */
   embedVideo?: string;
   /** Показать embedVideo после окончания sfx кадра. */
@@ -83,6 +96,8 @@ export type Scene = {
    * Changing music (string or null) also stops any active voice line.
    */
   music?: string | null;
+  /** Громкость фоновой музыки на этом кадре (0–1). По умолчанию 0.18. */
+  musicVolume?: number;
   /** Звуки на входе в кадр, по очереди. Число в массиве = пауза в мс между звуками. */
   sfx?: (string | number)[];
   /** Voice line played when the scene appears (persists until the music changes). */

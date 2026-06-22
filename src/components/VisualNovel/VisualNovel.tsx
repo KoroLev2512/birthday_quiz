@@ -6,6 +6,7 @@ import type { Scene, SceneChoice } from '../../types/story';
 import { ChoiceList } from './ChoiceList';
 import { CreditsRoll } from './CreditsRoll';
 import { DialogueBox } from './DialogueBox';
+import { OrderQuiz } from './OrderQuiz';
 import { SceneLayer } from './SceneLayer';
 import { SceneStage } from './SceneStage';
 import { StartMenu } from './StartMenu';
@@ -29,6 +30,7 @@ export function VisualNovel() {
   const [buttonVisible, setButtonVisible] = useState(false);
   const [embedVisible, setEmbedVisible] = useState(false);
   const [actionVisible, setActionVisible] = useState(false);
+  const [orderQuizVisible, setOrderQuizVisible] = useState(false);
   const [quizStep, setQuizStep] = useState(0);
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizAnswerVisible, setQuizAnswerVisible] = useState(false);
@@ -62,7 +64,7 @@ export function VisualNovel() {
     if (inMenu || !currentScene) return;
     const scene = currentScene;
     audio.resume();
-    audio.setMusic(scene.music);
+    audio.setMusic(scene.music, scene.musicVolume);
 
     let showEmbedAfterSfx: (() => void) | null = null;
     let ztmAfterSfx: (() => void) | null = null;
@@ -84,6 +86,7 @@ export function VisualNovel() {
       (scene.fadeOut || scene.advanceAfterSfx)
     ) {
       ztmAfterSfx = () => {
+        if (scene.musicAfterSfx !== undefined) audio.setMusic(scene.musicAfterSfx);
         const go = () => goForwardRef.current(scene);
         const delay = scene.advanceAfterSfxDelayMs ?? 0;
         if (delay) advanceAfterSfxTimer = window.setTimeout(go, delay);
@@ -121,8 +124,73 @@ export function VisualNovel() {
     setQuizStep(0);
     setQuizStarted(false);
     setQuizAnswerVisible(false);
+    setActionVisible(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
+
+  // Квиз на упорядочивание — появляется после озвучки кадра.
+  useEffect(() => {
+    const scene = currentScene;
+    if (inMenu || !scene?.orderQuiz) {
+      setOrderQuizVisible(false);
+      return;
+    }
+    setOrderQuizVisible(false);
+    const show = () => setOrderQuizVisible(true);
+    const t = window.setTimeout(() => {
+      if (audio.sfxActive) audio.onSfxIdle = show;
+      else show();
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      if (audio.onSfxIdle === show) audio.onSfxIdle = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneId, inMenu]);
+
+  // Кнопка actionLabel после sfx; опционально — смена музыки (сцена 3).
+  useEffect(() => {
+    const scene = currentScene;
+    if (inMenu || !scene?.actionAfterSfx || !scene.actionLabel) {
+      if (!scene?.actionAfterSfx) setActionVisible(false);
+      return;
+    }
+    setActionVisible(false);
+    const show = () => {
+      if (scene.musicAfterSfx !== undefined) audio.setMusic(scene.musicAfterSfx);
+      setActionVisible(true);
+    };
+    const t = window.setTimeout(() => {
+      if (audio.sfxActive) audio.onSfxIdle = show;
+      else show();
+    }, 0);
+    return () => {
+      window.clearTimeout(t);
+      if (audio.onSfxIdle === show) audio.onSfxIdle = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneId, inMenu]);
+
+  // Ответ квиза (сцена 3) — автопереход к следующему вопросу через 3 с.
+  useEffect(() => {
+    if (inMenu || !currentScene?.overlayQuiz?.length || !quizStarted || !quizAnswerVisible) return;
+    const scene = currentScene;
+    const quiz = scene.overlayQuiz!;
+    let advanced = false;
+    const fire = () => {
+      if (advanced) return;
+      advanced = true;
+      const nextStep = quizStep + 1;
+      if (nextStep < quiz.length) {
+        setQuizStep(nextStep);
+        setQuizAnswerVisible(false);
+      } else {
+        goForwardRef.current(scene);
+      }
+    };
+    const t = window.setTimeout(fire, 3000);
+    return () => window.clearTimeout(t);
+  }, [sceneId, inMenu, currentScene, quizStarted, quizAnswerVisible, quizStep]);
 
   // Показ кнопки-действия: сразу, после sfx или с задержкой button.delayMs.
   useEffect(() => {
@@ -265,10 +333,26 @@ export function VisualNovel() {
       return;
     }
 
-    // Пропуск ожидания sfx перед кнопкой («СЫГРАТЬ» и т.п.).
+    // Пропуск ожидания sfx перед кнопкой («СЫГРАТЬ», «ДОКАЗАТЬ» и т.п.).
     if (currentScene.button?.afterSfx && !buttonVisible) {
       audio.clearSfx();
       setButtonVisible(true);
+      return;
+    }
+
+    if (currentScene.actionAfterSfx && !actionVisible && currentScene.actionLabel) {
+      audio.clearSfx();
+      if (currentScene.musicAfterSfx !== undefined) audio.setMusic(currentScene.musicAfterSfx);
+      setActionVisible(true);
+      return;
+    }
+
+    // Пропуск озвучки → показать квиз на упорядочивание; пока он на экране — клики не листают.
+    if (currentScene.orderQuiz) {
+      if (!orderQuizVisible) {
+        audio.clearSfx();
+        setOrderQuizVisible(true);
+      }
       return;
     }
 
@@ -288,6 +372,11 @@ export function VisualNovel() {
         goForward(currentScene);
         return;
       }
+      if (currentScene.musicAfterSfx !== undefined && currentScene.advanceAfterSfx) {
+        audio.setMusic(currentScene.musicAfterSfx);
+        goForward(currentScene);
+        return;
+      }
       const blocked =
         currentScene.embedVideoAfterSfx ||
         currentScene.choices?.length ||
@@ -304,13 +393,10 @@ export function VisualNovel() {
       return;
     }
 
-    // Квиз поверх кадра (сцена 3): «Ответ» открывает картинку, клик — следующий вопрос.
+    // Квиз поверх кадра (сцена 3): «ДОКАЗАТЬ» → вопросы, «Ответ» → картинка, далее авто/клик.
     const quiz = currentScene.overlayQuiz;
     if (quiz?.length) {
-      if (!quizStarted) {
-        setQuizStarted(true);
-        return;
-      }
+      if (!quizStarted) return;
       if (!quizAnswerVisible) return;
       const nextStep = quizStep + 1;
       if (nextStep < quiz.length) {
@@ -322,7 +408,12 @@ export function VisualNovel() {
       return;
     }
 
-    if (currentScene.choices?.length || (currentScene.button && buttonVisible)) return;
+    if (
+      currentScene.choices?.length ||
+      currentScene.orderQuiz ||
+      (currentScene.button && buttonVisible)
+    )
+      return;
 
     if (!done) {
       finish();
@@ -344,6 +435,7 @@ export function VisualNovel() {
     quizAnswerVisible,
     quizStarted,
     quizStep,
+    actionVisible,
   ]);
 
   const goBack = useCallback(() => {
@@ -535,12 +627,14 @@ export function VisualNovel() {
         ? overlayQuiz![quizStep].answer
         : overlayQuiz![quizStep].image
       : null;
+  const showQuizProveBtn =
+    overlayQuizActive && !quizStarted && currentScene.actionLabel && actionVisible;
   const showQuizAnswerBtn = overlayQuizActive && quizStarted && !quizAnswerVisible;
   const showCursor =
     done &&
     !currentScene.choices?.length &&
     !isEnding &&
-    (!overlayQuizActive || !quizStarted || quizAnswerVisible);
+    (!overlayQuizActive || (quizStarted && quizAnswerVisible));
   const isCredits = currentScene.type === 'credits';
 
   return (
@@ -611,6 +705,18 @@ export function VisualNovel() {
         />
       )}
 
+      {orderQuizVisible && currentScene.orderQuiz && (
+        <OrderQuiz
+          key={currentScene.id}
+          quiz={currentScene.orderQuiz}
+          onCorrect={() => {
+            audio.playUiCue('correct');
+            goForward(currentScene);
+          }}
+          onWrong={() => audio.playUiCue('wrong')}
+        />
+      )}
+
       {answerFlash && (
         <div
           className={`vn-answer-flash ${answerFlash === 'correct' ? 'vn-answer-flash-correct' : 'vn-answer-flash-wrong'}`}
@@ -619,8 +725,11 @@ export function VisualNovel() {
         />
       )}
 
-      {(showQuizAnswerBtn ||
-        (currentScene.actionLabel && (!currentScene.actionAfterSfx || actionVisible))) && (
+      {(showQuizProveBtn ||
+        showQuizAnswerBtn ||
+        (currentScene.actionLabel &&
+          !overlayQuizActive &&
+          (!currentScene.actionAfterSfx || actionVisible))) && (
         <button
           type="button"
           className="vn-answer-btn"
@@ -628,6 +737,10 @@ export function VisualNovel() {
           onClick={(event) => {
             event.stopPropagation();
             audio.resume();
+            if (showQuizProveBtn) {
+              setQuizStarted(true);
+              return;
+            }
             if (showQuizAnswerBtn) {
               setQuizAnswerVisible(true);
               return;

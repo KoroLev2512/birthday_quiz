@@ -39,11 +39,13 @@ class AudioController {
     return Boolean(this.voiceEl && !this.voiceEl.ended);
   }
 
+  private defaultBgVolume = 0.18;
+
   private ensureBg(): HTMLAudioElement {
     if (!this.bg) {
       this.bg = new Audio();
       this.bg.loop = true;
-      this.bg.volume = 0.18;
+      this.bg.volume = this.defaultBgVolume;
     }
     return this.bg;
   }
@@ -56,7 +58,7 @@ class AudioController {
   }
 
   /** Apply a scene's `music` field. `undefined` keeps the current track. */
-  setMusic(src: string | null | undefined): void {
+  setMusic(src: string | null | undefined, volume?: number): void {
     if (src === undefined) return;
 
     // An explicit music change (new track or silence) ends the current voice.
@@ -67,12 +69,14 @@ class AudioController {
       return;
     }
 
+    const el = this.ensureBg();
+    el.volume = volume ?? this.defaultBgVolume;
+
     if (src === this.bgSrc) {
-      this.ensureBg().play().catch(() => {});
+      el.play().catch(() => {});
       return;
     }
 
-    const el = this.ensureBg();
     this.bgSrc = src;
     el.src = this.srcUrl(src);
     el.currentTime = 0;

@@ -70,6 +70,9 @@ const z11 = (name: string) => `/${DIR[11]}/Звуки/${name.normalize('NFC')}.m
 /** Путь к озвучке/музыке в подпапке «Звуки» сцены 12. */
 const z12 = (name: string) => `/${DIR[12]}/Звуки/${name.normalize('NFC')}.mp3`;
 
+/** Путь к озвучке/музыке в подпапке «Звуки» сцены 13. */
+const z13 = (name: string) => `/${DIR[13]}/Звуки/${name.normalize('NFC')}.mp3`;
+
 /** Путь к озвучке/музыке в подпапке «Звуки» сцены 14. */
 const z14 = (name: string) => `/${DIR[14]}/Звуки/${name.normalize('NFC')}.mp3`;
 
@@ -116,18 +119,13 @@ const SCENES: SceneDef[] = [
     n: 0,
     frames: kadr(1, 5),
     music: { 1: au(0, '1 сцена фоновая музыка') },
-    // Голос мамы (одна дорожка) играет поверх музыки всю сцену.
     voice: { 1: au(0, 'Голос_Мамы') },
-    // Тайминги кадров по сценарию (последний кадр — кнопка «НАЧАТЬ ИГРУ»).
     auto: { 1: 10000, 2: 13000, 3: 10000, 4: 14000 },
   },
   {
     n: 1,
-    // По обновлённому сценарию — кадры 1–12, ЗТМ после 12 (файл «13 кадр» не используется).
     frames: kadr(1, 12),
-    // На 1 кадре глушим музыку/голос сцены 0; «Фоновый звук 1» (дом) — с 8 кадра.
     music: { 1: null, 8: z1('Фоновый звук 1') },
-    // Вся озвучка и эффекты — только из подпапки «Звуки». Число = пауза в мс.
     sfx: {
       1: [
         z1('Сметана'),
@@ -155,21 +153,8 @@ const SCENES: SceneDef[] = [
       ],
       12: [z1('А я тебя сюда привел!'), z1('Лай')],
     },
-    // Тайминги кадров по сценарию (последний кадр авто-уводит в ЗТМ).
-    auto: {
-      1: 32000,
-      2: 19000,
-      3: 8000,
-      4: 2000,
-      5: 6000,
-      6: 3000,
-      7: 5000,
-      8: 5000,
-      9: 5000,
-      10: 7000,
-      11: 7000,
-      12: 5000,
-    },
+    // Кадры 6 и 8 без озвучки — короткий таймер; остальные листаются в buildStoryScenes.
+    auto: { 6: 3000, 8: 5000 },
   },
   {
     n: 2,
@@ -207,13 +192,13 @@ const SCENES: SceneDef[] = [
   {
     n: 3,
     frames: kadr(1, 5),
-    // Музыка и озвучка — из подпапки «Звуки». Кадры 1 и 3 без реплик (нет файла).
     music: {
       1: z3('Сцена 3 - Фоновая музыка 1'),
-      5: z3('Сцена 3 - Фоновая музыка 2'),
     },
     sfx: {
+      1: [z3('s3-v1')],
       2: [z3('Протестую! Это просто заблудившиеся брат и сестра. У обвинения нет доказательств преступного сговора!')],
+      3: [z3('s3-v2')],
       4: [z3('Протестую! Цветные полотна еще не изобрели!')],
       5: [
         z3('Тишина в зале суда! Маша и Матвей, если вы правда брат и сестра, то вы должны сказать мне, что здесь изображено.'),
@@ -404,7 +389,7 @@ const SCENES: SceneDef[] = [
         ),
         z12('Да, я тоже так сделала. Ой… а вы чего тут_ Вам нужно помочь_'),
       ],
-      2: [z12('Пропустите, пожалуйста')],
+      2: [z12('Пропустите, пожалуйста'), z12('s12-v2')],
       3: [z12('Здравствуйте, хотите я расскажу вам как завайбкодить пропускную систему_')],
     },
   },
@@ -412,8 +397,18 @@ const SCENES: SceneDef[] = [
     n: 13,
     frames: kadr(1, 5),
     music: {
-      1: au(13, '13 Сцена Фоновая музыка 1'),
-      5: au(13, '13 Сцена Фоновая музыка 2'),
+      1: z13('13 Сцена Фоновая музыка 1'),
+    },
+    sfx: {
+      1: [z13('Здравствуйте! Вы принесли мне новых крыс для опытов_')],
+      2: [
+        z13(
+          'Нет, мы больше не проводим опыты на крысах. Вы хотите присоединиться к лабораторной работе_',
+        ),
+      ],
+      3: [z13('Кажется они гнались за тем вором')],
+      4: [z13('s13-v1')],
+      5: [z13('Он побежал туда!')],
     },
   },
   {
@@ -448,7 +443,7 @@ const SCENES: SceneDef[] = [
     frames: [...kadr(1, 9), ...kadr(11, 21)],
     music: {
       1: z15('15 Сцена Фоновая музыка 1'),
-      14: z15('15 Сцена Фоновая музыка 2'),
+      12: z15('15 Сцена Фоновая музыка 2'),
     },
     sfx: {
       1: [z15('Давайте руку!')],
@@ -467,13 +462,8 @@ const SCENES: SceneDef[] = [
       12: [z15('Отпустите их!'), z15(' В добрый путь, друзья!')],
       14: [z15('Это тебе! ')],
       15: [z15('До встречи, Мотя!')],
-      18: [z15('Но почему_'), z15('Но почему_(1)')],
-      19: [
-        z15(
-          's15-v1',
-        ),
-        z15('Лай'),
-      ],
+      18: [z15('Но почему_'), z15('s15-v2')],
+      19: [z15('s15-v1'), z15('s15-lay')],
       20: [z15('Волшебство')],
     },
     auto: {
@@ -494,8 +484,6 @@ const SCENES: SceneDef[] = [
       15: 2000,
       16: 3000,
       17: 3000,
-      18: 3000,
-      19: 15000,
       20: 3000,
     },
   },
@@ -510,7 +498,7 @@ const SCENES: SceneDef[] = [
     voice: {
       3: au(16, S16_PAPA),
     },
-    auto: { 1: 1000 },
+    auto: { 1: 4000, 2: 15000 },
   },
 ];
 
@@ -523,7 +511,7 @@ const BUTTONS: Record<string, { label: string; nextSceneId: string; delayMs?: nu
   s5_3: { label: 'СЫГРАТЬ', nextSceneId: 's5_4', afterSfx: true },
   s7_2: { label: 'ГОТОВИТЬ', nextSceneId: 's7_3', afterSfx: true },
   s11_3: { label: 'Назад', nextSceneId: 's11_2' },
-  s11_7: { label: 'Назад', nextSceneId: 's11_6' },
+  s11_7: { label: 'Назад', nextSceneId: 's11_5' },
   s11_11: { label: 'Назад', nextSceneId: 's11_10' },
   s11_14: { label: 'Назад', nextSceneId: 's11_13' },
   s14_3: { label: 'Назад', nextSceneId: 's14_1' },
@@ -607,7 +595,7 @@ const CHOICES: Record<string, SceneChoice[]> = {
     { label: 'Направо', nextSceneId: 's11_3' },
   ],
   s11_5: [
-    { label: 'Налево', nextSceneId: 's11_3' },
+    { label: 'Налево', nextSceneId: 's11_7' },
     { label: 'Направо', nextSceneId: 's11_6' },
   ],
   s11_8: [
@@ -647,6 +635,7 @@ const FADE_SFX: Record<string, { src: string; delayMs?: number }> = {
   s1_12: { src: z1('Взрыв') },
   s2_9: { src: z1('ЗТМ') },
   s10_7: { src: z10('ЗТМ') },
+  s13_5: { src: z13('ЗТМ') },
   s15_20: { src: z15('ЗТМ') },
 };
 
@@ -938,11 +927,105 @@ const CREDITS_SCENE: Scene = {
   credits: CREDITS_CAST,
 };
 
+const S13_FRAME_4 = `/${DIR[13]}/4 кадр.webp`;
+
+const S13_QUIZ_SCENES: Scene[] = [
+  {
+    id: 's13_q1',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Что в древнерусском языке и других славянских языках означало слово «живот»?',
+    quiz: true,
+    choices: [
+      { label: 'часть тела', correct: false },
+      { label: 'жизнь', nextSceneId: 's13_q2', correct: true },
+      { label: 'богатство', correct: false },
+    ],
+  },
+  {
+    id: 's13_q2',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Какая метрика показывает, какой процент пользователей возвращается в приложение или на сайт через определенный период времени?',
+    quiz: true,
+    choices: [
+      { label: 'Churn Rate', correct: false },
+      { label: 'LTV', correct: false },
+      { label: 'Retention Rate', nextSceneId: 's13_q3', correct: true },
+    ],
+  },
+  {
+    id: 's13_q3',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Как называется стандартная международная структура научной статьи, принятая в журналах Scopus?',
+    quiz: true,
+    choices: [
+      { label: 'FIFO', correct: false },
+      { label: 'IMRAD', nextSceneId: 's13_q4', correct: true },
+      { label: 'SWOT', correct: false },
+    ],
+  },
+  {
+    id: 's13_q4',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Какая из этих букв кириллицы изначально обозначала числовой символ «8» и называлась «иже»?',
+    quiz: true,
+    choices: [
+      { label: 'И', nextSceneId: 's13_q5', correct: true },
+      { label: 'А', correct: false },
+      { label: 'О', correct: false },
+    ],
+  },
+  {
+    id: 's13_q5',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Что такое мультиколлинеарность?',
+    quiz: true,
+    choices: [
+      {
+        label: 'сильная зависимость между независимыми переменными',
+        nextSceneId: 's13_q6',
+        correct: true,
+      },
+      { label: 'непостоянство дисперсии', correct: false },
+      { label: 'математическая ошибка', correct: false },
+    ],
+  },
+  {
+    id: 's13_q6',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Что показывает «квартиль» журнала в наукометрических базах?',
+    quiz: true,
+    choices: [
+      { label: 'Количество статей', correct: false },
+      { label: 'Уровень авторитетности', nextSceneId: 's13_q7', correct: true },
+      { label: 'Количество рецензентов', correct: false },
+    ],
+  },
+  {
+    id: 's13_q7',
+    src: S13_FRAME_4,
+    effect: EFFECTS[13 % EFFECTS.length],
+    text: 'Какой формы планета Земля?',
+    quiz: true,
+    choices: [
+      { label: 'Плоская', correct: false },
+      { label: 'Треугольная', correct: false },
+      { label: 'Круглая', nextSceneId: 's13_5', correct: true },
+    ],
+  },
+];
+
 // Вердикт суда: после квиза судья оглашает решение, затем ЗТМ + удар молотка.
 const S3_VERDICT_SCENE: Scene = {
   id: 's3_verdict',
   src: g3('5 кадр.webp'),
   effect: EFFECTS[3 % EFFECTS.length],
+  music: null,
   sfx: [
     z3('Всем встать! Именем ее Величества Маша и Матвей суд признал вас .. невиновными. Вы можете идти!'),
   ],
@@ -960,11 +1043,21 @@ function buildStoryScenes() {
   const s3_5 = scenes.find((scene) => scene.id === 's3_5');
   if (s3_5) {
     s3_5.overlayQuiz = S3_QUIZ;
+    s3_5.actionLabel = 'ДОКАЗАТЬ';
+    s3_5.actionAfterSfx = true;
+    s3_5.musicAfterSfx = z3('Сцена 3 - Фоновая музыка 2');
     // После квиза переходим к кадру вердикта (а не сразу в ЗТМ).
     s3_5.fadeOut = false;
     s3_5.nextSceneId = 's3_verdict';
     const at = scenes.findIndex((scene) => scene.id === 's3_5');
     scenes.splice(at + 1, 0, S3_VERDICT_SCENE);
+  }
+
+  for (const id of [
+    's1_1', 's1_2', 's1_3', 's1_4', 's1_5', 's1_7', 's1_9', 's1_10', 's1_11', 's1_12',
+  ] as const) {
+    const frame = scenes.find((scene) => scene.id === id);
+    if (frame) frame.advanceAfterSfx = true;
   }
 
   const s12_1 = scenes.find((scene) => scene.id === 's12_1');
@@ -976,10 +1069,44 @@ function buildStoryScenes() {
   const s12_1_pick = scenes.find((scene) => scene.id === 's12_1_pick');
   if (s12_1_pick) s12_1_pick.choices = CHOICES.s12_1_pick;
 
+  const s12_2 = scenes.find((scene) => scene.id === 's12_2');
+  if (s12_2) s12_2.advanceAfterSfx = true;
+
+  for (const id of ['s13_1', 's13_2', 's13_3'] as const) {
+    const frame = scenes.find((scene) => scene.id === id);
+    if (frame) frame.advanceAfterSfx = true;
+  }
+
+  const insertS13QuizAt = scenes.findIndex((scene) => scene.id === 's13_5');
+  if (insertS13QuizAt !== -1) scenes.splice(insertS13QuizAt, 0, ...S13_QUIZ_SCENES);
+
+  const s13_4 = scenes.find((scene) => scene.id === 's13_4');
+  if (s13_4) {
+    s13_4.advanceAfterSfx = true;
+    s13_4.musicAfterSfx = z13('13 Сцена Фоновая музыка 2');
+    s13_4.nextSceneId = 's13_q1';
+  }
+
+  const s13_5 = scenes.find((scene) => scene.id === 's13_5');
+  if (s13_5) {
+    s13_5.music = null;
+    s13_5.advanceAfterSfx = true;
+  }
+
   const s14_2 = scenes.find((scene) => scene.id === 's14_2');
   if (s14_2) {
     s14_2.advanceAfterSfx = true;
     s14_2.advanceAfterSfxDelayMs = 1000;
+  }
+
+  // Кадр 8: после реплики Миши — квиз на упорядочивание (рейтинг сериалов).
+  const s14_8 = scenes.find((scene) => scene.id === 's14_8');
+  if (s14_8) {
+    s14_8.orderQuiz = {
+      title: 'Рейтинг любимых сериалов Матвея',
+      items: ['Бумажный дом', 'Сверхъестественное', 'Игра престолов', 'Пацаны'],
+      correct: ['Пацаны', 'Сверхъестественное', 'Игра престолов', 'Бумажный дом'],
+    };
   }
 
   const s5_10 = scenes.find((scene) => scene.id === 's5_10');
@@ -1021,18 +1148,21 @@ function buildStoryScenes() {
   const insertIrAt = scenes.findIndex((scene) => scene.id === 's10_1');
   if (insertIrAt !== -1) scenes.splice(insertIrAt, 0, ...S9_IR_QUIZ_SCENES);
 
-  const s16_2 = scenes.find((scene) => scene.id === 's16_2');
-  if (s16_2) {
-    s16_2.advanceAfterSfx = true;
-    s16_2.advanceAfterSfxDelayMs = 2000;
-  }
+  const s15_12 = scenes.find((scene) => scene.id === 's15_12');
+  if (s15_12) s15_12.musicVolume = 0.36;
+
+  const s15_18 = scenes.find((scene) => scene.id === 's15_18');
+  if (s15_18) s15_18.advanceAfterSfx = true;
+
+  const s15_19 = scenes.find((scene) => scene.id === 's15_19');
+  if (s15_19) s15_19.advanceAfterSfx = true;
 
   const s16_3 = scenes.find((scene) => scene.id === 's16_3');
   if (s16_3) {
     s16_3.fadeOut = false;
     s16_3.nextSceneId = undefined;
     s16_3.advanceAfterVoice = true;
-    s16_3.advanceAfterVoiceDelayMs = 3000;
+    s16_3.advanceAfterVoiceDelayMs = 1000;
   }
 
   return [...scenes, CREDITS_SCENE];
