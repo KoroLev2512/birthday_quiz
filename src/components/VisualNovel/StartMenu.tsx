@@ -41,6 +41,15 @@ export function StartMenu({ onSelect }: StartMenuProps) {
           <span className="vn-menu-label">Титры</span>
         </button>
       </div>
+
+      <footer className="vn-menu-footer" data-testid="vn-menu-footer">
+        <span>
+          Дизайн и разработка —{' '}
+          <a href="https://dev-by-yurii.vercel.app" target="_blank" rel="noopener noreferrer">
+            dev-by-yurii
+          </a>
+        </span>
+      </footer>
     </div>
   );
 }

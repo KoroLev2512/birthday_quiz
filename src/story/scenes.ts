@@ -1097,7 +1097,7 @@ function buildStoryScenes() {
       effect: s14_8.effect,
       nextSceneId: 's14_9',
       orderQuiz: {
-        title: 'Рейтинг любимых сериалов Матвея',
+        title: 'Рейтинг любимых сериалов Маши',
         items: ['Кухня', 'Энн', 'Шерлок', 'Бумажный дом'],
         correct: ['Бумажный дом', 'Кухня', 'Шерлок', 'Энн'],
       },

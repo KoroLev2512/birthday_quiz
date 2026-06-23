@@ -26,8 +26,38 @@ class AudioController {
   /** Вызывается один раз, когда голосовая реплика доиграла естественным образом. */
   onVoiceIdle: (() => void) | null = null;
 
+  private static readonly SFX_VOL = 0.85;
+  private static readonly VOICE_VOL = 1;
+  private masterVol = 1;
+  private isMuted = false;
+  private bgBaseVol = 0.18;
+
   private srcUrl(src: string): string {
     return src.startsWith('http') ? src : encodeURI(src);
+  }
+
+  get muted(): boolean {
+    return this.isMuted;
+  }
+
+  get masterVolume(): number {
+    return this.masterVol;
+  }
+
+  /** Глобальное отключение/включение звука (через .muted — тайминги сохраняются). */
+  setMuted(muted: boolean): void {
+    this.isMuted = muted;
+    if (this.bg) this.bg.muted = muted;
+    if (this.voiceEl) this.voiceEl.muted = muted;
+    if (this.sfxEl) this.sfxEl.muted = muted;
+  }
+
+  /** Общая громкость 0..1 (масштабирует музыку, голос и эффекты). */
+  setMasterVolume(v: number): void {
+    this.masterVol = Math.max(0, Math.min(1, v));
+    if (this.bg) this.bg.volume = this.bgBaseVol * this.masterVol;
+    if (this.voiceEl) this.voiceEl.volume = AudioController.VOICE_VOL * this.masterVol;
+    if (this.sfxEl) this.sfxEl.volume = AudioController.SFX_VOL * this.masterVol;
   }
 
   /** Идёт ли сейчас воспроизведение очереди звуков (или пауза в ней). */
@@ -45,7 +75,7 @@ class AudioController {
     if (!this.bg) {
       this.bg = new Audio();
       this.bg.loop = true;
-      this.bg.volume = this.defaultBgVolume;
+      this.bg.muted = this.isMuted;
     }
     return this.bg;
   }
@@ -70,7 +100,9 @@ class AudioController {
     }
 
     const el = this.ensureBg();
-    el.volume = volume ?? this.defaultBgVolume;
+    this.bgBaseVol = volume ?? this.defaultBgVolume;
+    el.volume = this.bgBaseVol * this.masterVol;
+    el.muted = this.isMuted;
 
     if (src === this.bgSrc) {
       el.play().catch(() => {});
@@ -103,9 +135,11 @@ class AudioController {
   }
 
   playUiCue(kind: 'correct' | 'wrong'): void {
+    if (this.isMuted || this.masterVol <= 0) return;
     const ctx = this.ensureUiCtx();
     if (!ctx) return;
 
+    const v = this.masterVol;
     const now = ctx.currentTime + 0.01;
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
@@ -120,7 +154,7 @@ class AudioController {
       osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
       osc2.frequency.setValueAtTime(659.25, now);
       osc2.frequency.exponentialRampToValueAtTime(987.77, now + 0.18);
-      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.08 * v, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
       osc1.connect(gain);
       osc2.connect(gain);
@@ -139,7 +173,7 @@ class AudioController {
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(900, now);
     filter.Q.value = 1;
-    gain.gain.exponentialRampToValueAtTime(0.09, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.09 * v, now + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
     osc.connect(filter);
     filter.connect(gain);
@@ -177,7 +211,8 @@ class AudioController {
     }
 
     const a = new Audio(this.srcUrl(next));
-    a.volume = 0.85;
+    a.volume = AudioController.SFX_VOL * this.masterVol;
+    a.muted = this.isMuted;
     this.sfxEl = a;
     const advance = () => {
       this.sfxEl = null;
@@ -210,7 +245,8 @@ class AudioController {
     this.stopVoice();
     this.onVoiceIdle = idle;
     const a = new Audio(this.srcUrl(src));
-    a.volume = 1;
+    a.volume = AudioController.VOICE_VOL * this.masterVol;
+    a.muted = this.isMuted;
     this.voiceEl = a;
     this.voiceSrc = src;
     a.onended = () => {
