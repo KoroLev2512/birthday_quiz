@@ -12,72 +12,70 @@ import { CREDITS_CAST } from './credits';
  */
 
 const DIR: Record<number, string> = {
-  0: 'Сцена 0',
-  1: 'Сцена 1',
-  2: 'Сцена 2',
-  3: 'Сцена 3',
-  4: 'Сцена 4',
-  5: 'Сцена 5',
-  6: '6 сцена',
-  7: '7 сцена',
-  8: '8 сцена',
-  9: '9 сцена',
-  10: '10 сцена',
-  11: '11 сцена',
-  12: '12 сцена',
-  13: '13 сцена',
-  14: '14 сцена',
-  15: '15 сцена',
-  16: '16 сцена',
+  0: 'scene_0',
+  1: 'scene_1',
+  2: 'scene_2',
+  3: 'scene_3',
+  4: 'scene_4',
+  5: 'scene_5',
+  6: 'scene_6',
+  7: 'scene_7',
+  8: 'scene_8',
+  9: 'scene_9',
+  10: 'scene_10',
+  11: 'scene_11',
+  12: 'scene_12',
+  13: 'scene_13',
+  14: 'scene_14',
+  15: 'scene_15',
+  16: 'scene_16',
 };
 
-/** Путь к аудио внутри папки сцены (NFC — иначе на macOS пути не совпадут с файлами). */
 const au = (n: number, name: string) => `/${DIR[n]}/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/доп. звукам в подпапке «Звуки» сцены 1. */
-const z1 = (name: string) => `/${DIR[1]}/Звуки/${name.normalize('NFC')}.mp3`;
+const z1 = (name: string) => `/${DIR[1]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/доп. звукам в подпапке «Звуки» сцены 2. */
-const z2 = (name: string) => `/${DIR[2]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/доп. звукам в подпапке sound сцены 2. */
+const z2 = (name: string) => `/${DIR[2]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 3. */
-const z3 = (name: string) => `/${DIR[3]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 3. */
+const z3 = (name: string) => `/${DIR[3]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 5. */
-const z5 = (name: string) => `/${DIR[5]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 5. */
+const z5 = (name: string) => `/${DIR[5]}/sound/${name.normalize('NFC')}.mp3`;
 
 /** Путь к ассетам мини-игры в подпапке «Игра» сцены 5. */
 const g5 = (name: string) => `/${DIR[5]}/Игра/${name.normalize('NFC')}`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 6. */
-const z6 = (name: string) => `/${DIR[6]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 6. */
+const z6 = (name: string) => `/${DIR[6]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 7. */
-const z7 = (name: string) => `/${DIR[7]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 7. */
+const z7 = (name: string) => `/${DIR[7]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 8. */
-const z8 = (name: string) => `/${DIR[8]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 8. */
+const z8 = (name: string) => `/${DIR[8]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 9. */
-const z9 = (name: string) => `/${DIR[9]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 9. */
+const z9 = (name: string) => `/${DIR[9]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 10. */
-const z10 = (name: string) => `/${DIR[10]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 10. */
+const z10 = (name: string) => `/${DIR[10]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 11. */
-const z11 = (name: string) => `/${DIR[11]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 11. */
+const z11 = (name: string) => `/${DIR[11]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 12. */
-const z12 = (name: string) => `/${DIR[12]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 12. */
+const z12 = (name: string) => `/${DIR[12]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 13. */
-const z13 = (name: string) => `/${DIR[13]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 13. */
+const z13 = (name: string) => `/${DIR[13]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 14. */
-const z14 = (name: string) => `/${DIR[14]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 14. */
+const z14 = (name: string) => `/${DIR[14]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке «Звуки» сцены 15. */
-const z15 = (name: string) => `/${DIR[15]}/Звуки/${name.normalize('NFC')}.mp3`;
+/** Путь к озвучке/музыке в подпапке sound сцены 15. */
+const z15 = (name: string) => `/${DIR[15]}/sound/${name.normalize('NFC')}.mp3`;
 
 /** Имена кадров «A кадр.webp» … «B кадр.webp». */
 const kadr = (a: number, b: number, ext = 'webp') =>
