@@ -4,7 +4,8 @@ const DEFAULT_SPEED_MS = 28;
 
 export function useTypewriter(text: string, speedMs = DEFAULT_SPEED_MS) {
   const [displayed, setDisplayed] = useState('');
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(!text);
+  const [typingText, setTypingText] = useState(text);
   const timerRef = useRef<number | null>(null);
 
   const clearTimer = useCallback(() => {
@@ -14,14 +15,15 @@ export function useTypewriter(text: string, speedMs = DEFAULT_SPEED_MS) {
     }
   }, []);
 
-  useEffect(() => {
+  // Сброс при смене текста — паттерн React «adjust state when props change».
+  if (text !== typingText) {
+    setTypingText(text);
     setDisplayed('');
-    setDone(false);
+    setDone(!text);
+  }
 
-    if (!text) {
-      setDone(true);
-      return;
-    }
+  useEffect(() => {
+    if (!text) return;
 
     let index = 0;
     timerRef.current = window.setInterval(() => {
@@ -35,7 +37,7 @@ export function useTypewriter(text: string, speedMs = DEFAULT_SPEED_MS) {
     }, speedMs);
 
     return clearTimer;
-  }, [text, speedMs, clearTimer]);
+  }, [typingText, text, speedMs, clearTimer]);
 
   const finish = useCallback(() => {
     clearTimer();

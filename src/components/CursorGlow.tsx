@@ -6,11 +6,6 @@ const INTERACTIVE =
 
 const STAR_CHARS = ['✦', '✧', '⋆', '✫', '✯'];
 
-/** Вспышка курсора при ответе в квизе (зелёный/красный). */
-export function flashCursor(kind: 'correct' | 'wrong') {
-  window.dispatchEvent(new CustomEvent('vn-cursor-flash', { detail: kind }));
-}
-
 /**
  * Волшебный золотой курсор-стрелка со шлейфом из звёздочек.
  * Меняет цвет на зелёный/красный при правильном/неправильном ответе.

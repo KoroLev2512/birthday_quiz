@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { audio } from '../../audio/audioController';
-import { flashCursor } from '../CursorGlow';
+import { flashCursor } from '../../lib/cursorFlash';
 import { useTypewriter } from '../../hooks/useTypewriter';
 import { getPrevSceneId, getSceneById, getStartScene } from '../../story/scenes';
 import type { Scene, SceneChoice } from '../../types/story';
@@ -17,6 +17,21 @@ const ANSWER_FLASH_MS = 420;
 
 /** Кадры с «Охраной» в сцене 11 — «Назад» возвращает на кадр с выбором. */
 const S11_GUARD = new Set(['s11_3', 's11_7', 's11_11', 's11_14']);
+
+/** Начальное UI-состояние кадра (сброс при goToScene, без setState в эффектах). */
+function initialSceneUi(scene: Scene) {
+  const hasOverlayQuiz = Boolean(scene.overlayQuiz?.length);
+  const btn = scene.button;
+  return {
+    embedVisible: Boolean(scene.embedVideo && !scene.embedVideoAfterSfx),
+    actionVisible: Boolean(scene.actionLabel && !scene.actionAfterSfx && !hasOverlayQuiz),
+    orderQuizVisible: false,
+    buttonVisible: Boolean(btn && !btn.afterSfx && !btn.delayMs),
+    quizStep: 0,
+    quizStarted: false,
+    quizAnswerVisible: false,
+  };
+}
 
 export function VisualNovel() {
   const [inMenu, setInMenu] = useState(true);
@@ -75,8 +90,6 @@ export function VisualNovel() {
     let advanceAfterVoiceTimer: number | null = null;
     let afterVoice: (() => void) | null = null;
     if (scene.embedVideoAfterSfx && scene.embedVideo) {
-      setEmbedVisible(false);
-      setActionVisible(false);
       showEmbedAfterSfx = () => {
         setEmbedVisible(true);
         if (scene.actionAfterSfx && scene.actionLabel) setActionVisible(true);
@@ -121,24 +134,10 @@ export function VisualNovel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
-  // Сброс шага квиза при входе на кадр с overlayQuiz.
-  useEffect(() => {
-    if (inMenu || !currentScene?.overlayQuiz) return;
-    setQuizStep(0);
-    setQuizStarted(false);
-    setQuizAnswerVisible(false);
-    setActionVisible(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneId, inMenu]);
-
   // Квиз на упорядочивание — появляется после озвучки кадра.
   useEffect(() => {
     const scene = currentScene;
-    if (inMenu || !scene?.orderQuiz) {
-      setOrderQuizVisible(false);
-      return;
-    }
-    setOrderQuizVisible(false);
+    if (inMenu || !scene?.orderQuiz) return;
     const show = () => setOrderQuizVisible(true);
     const t = window.setTimeout(() => {
       if (audio.sfxActive) audio.onSfxIdle = show;
@@ -154,11 +153,7 @@ export function VisualNovel() {
   // Кнопка actionLabel после sfx; опционально — смена музыки (сцена 3).
   useEffect(() => {
     const scene = currentScene;
-    if (inMenu || !scene?.actionAfterSfx || !scene.actionLabel) {
-      if (!scene?.actionAfterSfx) setActionVisible(false);
-      return;
-    }
-    setActionVisible(false);
+    if (inMenu || !scene?.actionAfterSfx || !scene.actionLabel) return;
     const show = () => {
       if (scene.musicAfterSfx !== undefined) audio.setMusic(scene.musicAfterSfx);
       setActionVisible(true);
@@ -195,17 +190,12 @@ export function VisualNovel() {
     return () => window.clearTimeout(t);
   }, [sceneId, inMenu, currentScene, quizStarted, quizAnswerVisible, quizStep]);
 
-  // Показ кнопки-действия: сразу, после sfx или с задержкой button.delayMs.
+  // Показ кнопки-действия: после sfx или с задержкой button.delayMs.
   useEffect(() => {
     const btn = currentScene?.button;
-    if (inMenu || !btn) {
-      setButtonVisible(false);
-      return;
-    }
+    if (inMenu || !btn?.afterSfx && !btn?.delayMs) return;
+    const show = () => setButtonVisible(true);
     if (btn.afterSfx) {
-      setButtonVisible(false);
-      const show = () => setButtonVisible(true);
-      // sfx-эффект сцены объявлен выше; 0 ms — дать очереди стартовать.
       const t = window.setTimeout(() => {
         if (audio.sfxActive) audio.onSfxIdle = show;
         else show();
@@ -215,28 +205,8 @@ export function VisualNovel() {
         if (audio.onSfxIdle === show) audio.onSfxIdle = null;
       };
     }
-    if (!btn.delayMs) {
-      setButtonVisible(true);
-      return;
-    }
-    setButtonVisible(false);
-    const t = window.setTimeout(() => setButtonVisible(true), btn.delayMs);
+    const t = window.setTimeout(show, btn.delayMs!);
     return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneId, inMenu]);
-
-  // Встроенное видео сразу при входе (без ожидания sfx).
-  useEffect(() => {
-    const scene = currentScene;
-    if (inMenu || !scene?.embedVideo || scene.embedVideoAfterSfx) {
-      if (!scene?.embedVideoAfterSfx) {
-        setEmbedVisible(false);
-        setActionVisible(false);
-      }
-      return;
-    }
-    setEmbedVisible(true);
-    setActionVisible(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, inMenu]);
 
@@ -247,6 +217,14 @@ export function VisualNovel() {
     pendingChoiceAdvance.current = null;
     returnSceneId.current = null;
     clearAnswerFlash();
+    const ui = initialSceneUi(scene);
+    setEmbedVisible(ui.embedVisible);
+    setActionVisible(ui.actionVisible);
+    setOrderQuizVisible(ui.orderQuizVisible);
+    setButtonVisible(ui.buttonVisible);
+    setQuizStep(ui.quizStep);
+    setQuizStarted(ui.quizStarted);
+    setQuizAnswerVisible(ui.quizAnswerVisible);
     setCurrentScene(scene);
     setIsEnding(false);
     setWrongLabel(null);
@@ -280,6 +258,14 @@ export function VisualNovel() {
     pendingChoiceAdvance.current = null;
     returnSceneId.current = null;
     clearAnswerFlash();
+    const ui = initialSceneUi(nextScene);
+    setEmbedVisible(ui.embedVisible);
+    setActionVisible(ui.actionVisible);
+    setOrderQuizVisible(ui.orderQuizVisible);
+    setButtonVisible(ui.buttonVisible);
+    setQuizStep(ui.quizStep);
+    setQuizStarted(ui.quizStarted);
+    setQuizAnswerVisible(ui.quizAnswerVisible);
     setCurrentScene(nextScene);
     setWrongLabel(null);
   }, [clearAnswerFlash]);
@@ -303,8 +289,6 @@ export function VisualNovel() {
     },
     [goToScene],
   );
-
-  goForwardRef.current = goForward;
 
   const advance = useCallback(() => {
     if (inMenu) return;
@@ -439,6 +423,7 @@ export function VisualNovel() {
     quizStarted,
     quizStep,
     actionVisible,
+    orderQuizVisible,
   ]);
 
   const goBack = useCallback(() => {
@@ -590,9 +575,11 @@ export function VisualNovel() {
     };
   }, [inMenu, pendingNext, currentScene, done, goForward]);
 
-  // Refs всегда держат свежие колбэки, чтобы слушатель клавиш не переподписывался.
-  advanceRef.current = advance;
-  goBackRef.current = goBack;
+  useEffect(() => {
+    goForwardRef.current = goForward;
+    advanceRef.current = advance;
+    goBackRef.current = goBack;
+  }, [goForward, advance, goBack]);
 
   // Клавиатура: Space / Enter / → — вперёд, ← — назад. Подписка один раз.
   useEffect(() => {

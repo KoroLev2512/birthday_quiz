@@ -20,11 +20,6 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      // Новые «компиляторные» правила react-hooks v7 — оставляем как предупреждения:
-      // ref-колбэки и сброс печатающегося текста в эффекте здесь намеренные.
-      'react-hooks/exhaustive-deps': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
     },
   },
   {

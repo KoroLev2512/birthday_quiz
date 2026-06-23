@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { CREDITS_CAST, CREDITS_DURATION_MS } from '../../story/credits';
 
 type CreditsRollProps = {
@@ -9,16 +9,16 @@ export function CreditsRoll({ onComplete }: CreditsRollProps) {
   const done = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const finish = () => {
+  const finish = useCallback(() => {
     if (done.current) return;
     done.current = true;
     onComplete();
-  };
+  }, [onComplete]);
 
   useEffect(() => {
     const timer = window.setTimeout(finish, CREDITS_DURATION_MS);
     return () => window.clearTimeout(timer);
-  }, [onComplete]);
+  }, [finish]);
 
   const skip = () => {
     if (scrollRef.current) {
