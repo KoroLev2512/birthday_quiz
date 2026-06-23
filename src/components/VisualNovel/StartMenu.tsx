@@ -7,6 +7,7 @@ type StartMenuProps = {
 export function StartMenu({ onSelect }: StartMenuProps) {
   return (
     <div className="vn-menu" data-testid="vn-menu">
+      <div className="vn-menu-body">
       <div className="vn-menu-head">
         <h1>Выбрать сцену</h1>
         <p>Начните историю с начала любой главы</p>
@@ -40,6 +41,7 @@ export function StartMenu({ onSelect }: StartMenuProps) {
           </span>
           <span className="vn-menu-label">Титры</span>
         </button>
+      </div>
       </div>
 
       <footer className="vn-menu-footer" data-testid="vn-menu-footer">
