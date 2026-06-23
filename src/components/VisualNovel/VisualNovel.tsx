@@ -37,6 +37,8 @@ export function VisualNovel() {
 
   const fadeSfxTimer = useRef<number | null>(null);
   const goForwardRef = useRef<(scene: Scene) => void>(() => {});
+  const advanceRef = useRef<() => void>(() => {});
+  const goBackRef = useRef<() => void>(() => {});
   const returnSceneId = useRef<string | null>(null);
   const pendingChoiceAdvance = useRef<string | null>(null);
   const answerFlashTimer = useRef<number | null>(null);
@@ -465,7 +467,7 @@ export function VisualNovel() {
       }
       if (quizStarted) {
         if (quizStep > 0) {
-          setQuizStep(quizStep - 1);
+          setQuizStep((step) => step - 1);
           setQuizAnswerVisible(true);
           return;
         }
@@ -585,20 +587,24 @@ export function VisualNovel() {
     };
   }, [inMenu, pendingNext, currentScene, done, goForward]);
 
-  // Клавиатура: Space / Enter / → — вперёд, ← — назад.
+  // Refs всегда держат свежие колбэки, чтобы слушатель клавиш не переподписывался.
+  advanceRef.current = advance;
+  goBackRef.current = goBack;
+
+  // Клавиатура: Space / Enter / → — вперёд, ← — назад. Подписка один раз.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
         e.preventDefault();
-        advance();
+        advanceRef.current();
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
-        goBack();
+        goBackRef.current();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [advance, goBack]);
+  }, []);
 
 
   if (inMenu) {

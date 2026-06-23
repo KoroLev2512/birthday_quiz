@@ -35,49 +35,34 @@ const au = (n: number, name: string) => `/${DIR[n]}/${name.normalize('NFC')}.mp3
 
 const z1 = (name: string) => `/${DIR[1]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/доп. звукам в подпапке sound сцены 2. */
 const z2 = (name: string) => `/${DIR[2]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 3. */
 const z3 = (name: string) => `/${DIR[3]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 5. */
 const z5 = (name: string) => `/${DIR[5]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к ассетам мини-игры в подпапке «Игра» сцены 5. */
 const g5 = (name: string) => `/${DIR[5]}/Игра/${name.normalize('NFC')}`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 6. */
 const z6 = (name: string) => `/${DIR[6]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 7. */
 const z7 = (name: string) => `/${DIR[7]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 8. */
 const z8 = (name: string) => `/${DIR[8]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 9. */
 const z9 = (name: string) => `/${DIR[9]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 10. */
 const z10 = (name: string) => `/${DIR[10]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 11. */
 const z11 = (name: string) => `/${DIR[11]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 12. */
 const z12 = (name: string) => `/${DIR[12]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 13. */
 const z13 = (name: string) => `/${DIR[13]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 14. */
 const z14 = (name: string) => `/${DIR[14]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Путь к озвучке/музыке в подпапке sound сцены 15. */
 const z15 = (name: string) => `/${DIR[15]}/sound/${name.normalize('NFC')}.mp3`;
 
-/** Имена кадров «A кадр.webp» … «B кадр.webp». */
 const kadr = (a: number, b: number, ext = 'webp') =>
   Array.from({ length: b - a + 1 }, (_, i) => `${a + i} кадр.${ext}`);
 
@@ -85,7 +70,6 @@ const S16_PAPA = 'Папа';
 
 const g3 = (name: string) => `/${DIR[3]}/${name.normalize('NFC')}`;
 
-/** Квиз суда на 5-м кадре: картинки и ответы поверх зала. */
 const S3_QUIZ = [
   { image: g3('1 картинка.webp'), answer: g3('1 Ответ.webp') },
   { image: g3('2 картинка.webp'), answer: g3('2 ответ.webp') },
@@ -151,7 +135,6 @@ const SCENES: SceneDef[] = [
       ],
       12: [z1('А я тебя сюда привел!'), z1('Лай')],
     },
-    // Кадры 6 и 8 без озвучки — короткий таймер; остальные листаются в buildStoryScenes.
     auto: { 6: 3000, 8: 5000 },
   },
   {
