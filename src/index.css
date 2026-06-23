@@ -22,6 +22,160 @@ body {
   font-family: var(--app-font-sans);
 }
 
+/* --- Просьба повернуть телефон (портрет на тач-устройствах) --- */
+.vn-rotate {
+  display: none;
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  .vn-rotate {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    background:
+      radial-gradient(circle at 50% 35%, rgb(60 40 110 / 45%), transparent 60%),
+      #07060d;
+    color: rgb(225 215 255 / 95%);
+  }
+}
+
+.vn-rotate-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.vn-rotate-phone {
+  font-size: 4.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 6px 18px rgb(120 70 220 / 50%));
+  animation: vn-rotate-hint 2s ease-in-out infinite;
+}
+
+.vn-rotate-text {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.vn-rotate-sub {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgb(180 165 220 / 65%);
+}
+
+@keyframes vn-rotate-hint {
+  0%,
+  35% {
+    transform: rotate(0deg);
+  }
+  65%,
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+
+/* --- Волшебный золотой курсор-стрелка со шлейфом из звёзд --- */
+/* Прячем системный курсор только когда активен наш (мышь). */
+.vn-has-cursor,
+.vn-has-cursor * {
+  cursor: none !important;
+}
+
+.vn-cursor-root {
+  --vn-cursor-color: #d4982a;
+  --vn-cursor-glow: rgb(212 152 42 / 80%);
+  --vn-star-color: #e8b53f;
+  --vn-star-glow: rgb(224 168 52 / 90%);
+  transition: opacity 0.25s;
+}
+
+.vn-cursor-root.is-correct {
+  --vn-cursor-color: #5af08c;
+  --vn-cursor-glow: rgb(80 240 150 / 85%);
+  --vn-star-color: #79f2a6;
+  --vn-star-glow: rgb(90 240 160 / 90%);
+}
+
+.vn-cursor-root.is-wrong {
+  --vn-cursor-color: #ff5a6e;
+  --vn-cursor-glow: rgb(255 90 110 / 85%);
+  --vn-star-color: #ff7a8c;
+  --vn-star-glow: rgb(255 100 120 / 90%);
+}
+
+.vn-cursor-off {
+  opacity: 0;
+}
+
+/* Стрелка */
+.vn-arrow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  color: var(--vn-cursor-color);
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px var(--vn-cursor-glow));
+  transition:
+    color 0.2s,
+    filter 0.2s;
+  will-change: transform;
+}
+
+.vn-arrow svg {
+  display: block;
+  transform-origin: 1px 1px;
+  transition: transform 0.12s ease;
+}
+
+.vn-arrow.is-hover svg {
+  transform: scale(1.25);
+}
+
+.vn-arrow.is-down svg {
+  transform: scale(0.85);
+}
+
+/* Шлейф из звёзд */
+.vn-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.vn-star {
+  position: fixed;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--vn-star-color);
+  text-shadow: 0 0 8px var(--vn-star-glow);
+  pointer-events: none;
+  animation: vn-star-fly 1.2s ease-out forwards;
+}
+
+@keyframes vn-star-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(calc(var(--s) * 0.4)) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0) rotate(var(--rot));
+  }
+}
+
 .vn-root {
   position: fixed;
   inset: 0;

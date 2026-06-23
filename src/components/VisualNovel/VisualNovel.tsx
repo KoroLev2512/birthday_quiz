@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { audio } from '../../audio/audioController';
+import { flashCursor } from '../CursorGlow';
 import { useTypewriter } from '../../hooks/useTypewriter';
 import { getPrevSceneId, getSceneById, getStartScene } from '../../story/scenes';
 import type { Scene, SceneChoice } from '../../types/story';
@@ -490,6 +491,7 @@ export function VisualNovel() {
         if (choice.correct === false) {
           clearAnswerFlash();
           audio.playUiCue('wrong');
+          flashCursor('wrong');
           if (currentScene.wrongSfx) audio.playSfx(currentScene.wrongSfx);
           setAnswerFlash('wrong');
           setWrongLabel(choice.label);
@@ -515,6 +517,7 @@ export function VisualNovel() {
         if (choice.correct === true) {
           clearAnswerFlash();
           audio.playUiCue('correct');
+          flashCursor('correct');
           setAnswerFlash('correct');
           answerFlashTimer.current = window.setTimeout(() => {
             setAnswerFlash(null);
@@ -717,9 +720,13 @@ export function VisualNovel() {
           quiz={currentScene.orderQuiz}
           onCorrect={() => {
             audio.playUiCue('correct');
+            flashCursor('correct');
             goForward(currentScene);
           }}
-          onWrong={() => audio.playUiCue('wrong')}
+          onWrong={() => {
+            audio.playUiCue('wrong');
+            flashCursor('wrong');
+          }}
         />
       )}
 
