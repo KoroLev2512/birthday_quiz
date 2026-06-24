@@ -31,44 +31,48 @@ const DIR: Record<number, string> = {
   16: 'scene_16',
 };
 
-const au = (n: number, name: string) => `/${DIR[n]}/${name.normalize('NFC')}.mp3`;
+// Версия ассетов: бамп сбрасывает кеш всех медиа (см. immutable-кеш в vercel.json).
+const ASSET_V = '1';
+const ver = (path: string) => `${path}?v=${ASSET_V}`;
 
-const z1 = (name: string) => `/${DIR[1]}/sound/${name.normalize('NFC')}.mp3`;
+const au = (n: number, name: string) => ver(`/${DIR[n]}/${name.normalize('NFC')}.mp3`);
 
-const z2 = (name: string) => `/${DIR[2]}/sound/${name.normalize('NFC')}.mp3`;
+const z1 = (name: string) => ver(`/${DIR[1]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z3 = (name: string) => `/${DIR[3]}/sound/${name.normalize('NFC')}.mp3`;
+const z2 = (name: string) => ver(`/${DIR[2]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z5 = (name: string) => `/${DIR[5]}/sound/${name.normalize('NFC')}.mp3`;
+const z3 = (name: string) => ver(`/${DIR[3]}/sound/${name.normalize('NFC')}.mp3`);
 
-const g5 = (name: string) => `/${DIR[5]}/Игра/${name.normalize('NFC')}`;
+const z5 = (name: string) => ver(`/${DIR[5]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z6 = (name: string) => `/${DIR[6]}/sound/${name.normalize('NFC')}.mp3`;
+const g5 = (name: string) => ver(`/${DIR[5]}/Игра/${name.normalize('NFC')}`);
 
-const z7 = (name: string) => `/${DIR[7]}/sound/${name.normalize('NFC')}.mp3`;
+const z6 = (name: string) => ver(`/${DIR[6]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z8 = (name: string) => `/${DIR[8]}/sound/${name.normalize('NFC')}.mp3`;
+const z7 = (name: string) => ver(`/${DIR[7]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z9 = (name: string) => `/${DIR[9]}/sound/${name.normalize('NFC')}.mp3`;
+const z8 = (name: string) => ver(`/${DIR[8]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z10 = (name: string) => `/${DIR[10]}/sound/${name.normalize('NFC')}.mp3`;
+const z9 = (name: string) => ver(`/${DIR[9]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z11 = (name: string) => `/${DIR[11]}/sound/${name.normalize('NFC')}.mp3`;
+const z10 = (name: string) => ver(`/${DIR[10]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z12 = (name: string) => `/${DIR[12]}/sound/${name.normalize('NFC')}.mp3`;
+const z11 = (name: string) => ver(`/${DIR[11]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z13 = (name: string) => `/${DIR[13]}/sound/${name.normalize('NFC')}.mp3`;
+const z12 = (name: string) => ver(`/${DIR[12]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z14 = (name: string) => `/${DIR[14]}/sound/${name.normalize('NFC')}.mp3`;
+const z13 = (name: string) => ver(`/${DIR[13]}/sound/${name.normalize('NFC')}.mp3`);
 
-const z15 = (name: string) => `/${DIR[15]}/sound/${name.normalize('NFC')}.mp3`;
+const z14 = (name: string) => ver(`/${DIR[14]}/sound/${name.normalize('NFC')}.mp3`);
+
+const z15 = (name: string) => ver(`/${DIR[15]}/sound/${name.normalize('NFC')}.mp3`);
 
 const kadr = (a: number, b: number, ext = 'webp') =>
   Array.from({ length: b - a + 1 }, (_, i) => `${a + i} кадр.${ext}`);
 
 const S16_PAPA = 'Папа';
 
-const g3 = (name: string) => `/${DIR[3]}/${name.normalize('NFC')}`;
+const g3 = (name: string) => ver(`/${DIR[3]}/${name.normalize('NFC')}`);
 
 const S3_QUIZ = [
   { image: g3('1 картинка.webp'), answer: g3('1 Ответ.webp') },
@@ -1158,6 +1162,12 @@ function buildStoryScenes() {
     s16_3.nextSceneId = undefined;
     s16_3.advanceAfterVoice = true;
     s16_3.advanceAfterVoiceDelayMs = 1000;
+  }
+
+  // Версионируем src кадров (для immutable-кеша); аудио/видео/квиз-картинки
+  // уже версионированы хелперами.
+  for (const s of scenes) {
+    if (s.src && !s.src.includes('?v=')) s.src = ver(s.src);
   }
 
   return [...scenes, CREDITS_SCENE];
