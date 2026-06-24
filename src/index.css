@@ -329,6 +329,21 @@ body {
   animation: vn-zoom-in 45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
 
+/* Мягкий зум для отдельных кадров (s0_5 с кнопкой «Начать игру»). */
+.vn-effect-zoom-soft {
+  transform-origin: 50% 45%;
+  animation: vn-zoom-soft 45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+@keyframes vn-zoom-soft {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}
+
 .vn-effect-zoom-out {
   transform-origin: 50% 45%;
   animation: vn-zoom-out 45s cubic-bezier(0.25, 0.1, 0.25, 1) both;

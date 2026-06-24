@@ -5,7 +5,9 @@ const LS_VOL = 'vn-volume';
 const LS_MUTE = 'vn-muted';
 
 function initialVolume(): number {
-  const v = Number(localStorage.getItem(LS_VOL));
+  const raw = localStorage.getItem(LS_VOL);
+  if (raw === null) return 1; // по умолчанию звук включён на полную
+  const v = Number(raw);
   return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 1;
 }
 

@@ -141,7 +141,9 @@ export function SceneStage({ scene }: SceneStageProps) {
   }, [scene.nextSceneId]);
 
   const fadeMs = TRANSITION_MS[transition];
-  const effectClass = EFFECT_CLASS[motionEffect];
+  // Отдельные кадры с приглушённым зумом (например финальный кадр сцены 0 с кнопкой).
+  const SOFT_ZOOM = new Set(['s0_5']);
+  const effectClass = SOFT_ZOOM.has(scene.id) ? 'vn-effect-zoom-soft' : EFFECT_CLASS[motionEffect];
 
   return (
     <div
