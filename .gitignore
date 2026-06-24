@@ -5,6 +5,7 @@ coverage
 *.local
 .vscode/*
 !.vscode/extensions.json
+*.code-workspace
 .idea
 
 # Scenario files — local only
